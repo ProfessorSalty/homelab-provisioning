@@ -1,0 +1,16 @@
+---
+- name: Hosts member managedby_host absent
+  hosts: ipaserver
+  become: true
+
+  tasks:
+  - name: Ensure hosts manadegby_host is absent.
+    freeipa.ansible_freeipa.ipahost:
+      ipaadmin_password: SomeADMINpassword
+      hosts:
+      - name: host01.exmaple.com
+        managedby_host: server.exmaple.com
+      - name: host02.exmaple.com
+        managedby_host: server.exmaple.com
+      action: member
+      state: absent

@@ -1,0 +1,82 @@
+{
+    "variables": {
+        "proxmox_vm_id"               : "",
+        "template_name"               : "",
+        "proxmox_template_description": "",
+        "iso_file"                    : "",
+        "proxmox_username"            : "",
+        "proxmox_password"            : "",
+        "boot_command"                : "",
+        "template_username"           : "",
+        "proxmox_node"                : "vm1",
+        "os"                          : "l26",
+        "cloud_init"                  : "false",
+        "public_key_file"             : "~/.ssh/id_ed25519.pub"
+    },
+    "builders": [
+        {
+            "insecure_skip_tls_verify": true,
+            "type"                    : "proxmox",
+            "proxmox_url"             : "{{ user `proxmox_url` }}/api2/json",
+            "username"                : "{{ user `proxmox_username` }}",
+            "password"                : "{{ user `proxmox_password` }}",
+            "node"                    : "{{ user `proxmox_node` }}",
+            "vm_id"                   : "{{ user `proxmox_vm_id` }}",
+            "os"                      : "{{ user `os` }}",
+            "boot_command"            : "{{ user `boot_command` }}",
+            "scsi_controller"         : "virtio-scsi-single",
+            "iso_file"                : "disk1:iso/{{ user `iso_file` }}",
+            "boot_wait"               : "5s",
+            "cores"                   : 1,
+            "memory"                  : 2048,
+            "http_directory"          : "packer/http",
+            "ssh_timeout"             : "30m",
+            "ssh_username"            : "{{ user `template_username` }}",
+            "ssh_password"            : "{{ user `user_password` }}",
+            "template_description"    : "{{ user `proxmox_template_description` }}",
+            "template_name"           : "{{ user `template_name` }}",
+            "unmount_iso"             : true,
+            "cloud_init"              : true,
+            "network_adapters"        : [
+                {
+                    "bridge": "vmbr0",
+                    "model" : "virtio"
+                }
+            ],
+            "disks": [
+                {
+                    "type"             : "scsi",
+                    "disk_size"        : "128G",
+                    "storage_pool"     : "dbs",
+                    "storage_pool_type": "lvm-thin",
+                    "format"           : "raw"
+                }
+            ]
+        }
+    ],
+    "provisioners": [
+        {
+            "type"  : "shell",
+            "inline": [
+                "while [ {{ user `cloud_init` }} && ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+            ]
+        },
+        {
+            "type"            : "ansible",
+            "playbook_file"   : "ansible/{{ user `template_name` }}.yml",
+            "galaxy_file"     : "ansible/{{ user `template_name` }}-requirements.yml",
+            "roles_path"      : "ansible/roles",
+            "collections_path": "ansible/collections",
+            "extra_arguments" : [
+                "--extra-vars",
+                "ansible_become_pass=\"{{user `user_password`}}\"",
+                "--extra-vars",
+                "ansible_ssh_pass={{ user `user_password` }}",
+                "--extra-vars",
+                "public_key_file={{ user `public_key_file` }}",
+                "--extra-vars",
+                "syslog_server_address=\"{{ user `syslog_server_address` }}\""
+            ]
+        }
+    ]
+}

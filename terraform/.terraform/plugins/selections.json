@@ -1,0 +1,6 @@
+{
+  "registry.terraform.io/telmate/proxmox": {
+    "hash": "h1:huIRuhRgKsvPHFyccxez4tgpERxE9Wx97D6paS0cCg4=",
+    "version": "2.6.5"
+  }
+}

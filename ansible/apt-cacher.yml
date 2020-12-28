@@ -1,0 +1,4 @@
+- name: Setup apt-cacher
+  hosts: default
+  become: true
+  remote_user: toor

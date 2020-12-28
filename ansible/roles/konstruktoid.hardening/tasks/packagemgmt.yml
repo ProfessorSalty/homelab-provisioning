@@ -1,0 +1,175 @@
+---
+- name: configure apt
+  become: 'yes'
+  lineinfile:
+    dest: /etc/apt/apt.conf.d/98-hardening-ubuntu
+    mode: 0644
+    state: present
+    create: 'yes'
+    line: "{{ item }}"
+  with_items:
+    - 'Acquire::AllowDowngradeToInsecureRepositories "false";'
+    - 'Acquire::AllowInsecureRepositories "false";'
+    - 'Acquire::http::AllowRedirect "false";'
+    - 'APT::Get::AllowUnauthenticated "false";'
+    - 'APT::Get::AutomaticRemove "true";'
+    - 'APT::Install-Recommends "false";'
+    - 'APT::Install-Suggests "false";'
+    - 'APT::Periodic::AutocleanInterval "7";'
+    - 'Unattended-Upgrade::Remove-Unused-Dependencies "true";'
+  when: ansible_os_family == "Debian"
+  tags:
+    - apt
+
+- name: apt update
+  become: 'yes'
+  apt:
+    update_cache: 'yes'
+    cache_valid_time: 1800
+  notify:
+    - apt-get clean
+    - apt-get autoremove
+  when: ansible_os_family == "Debian"
+  tags:
+    - apt
+
+- name: apt upgrade
+  become: 'yes'
+  apt:
+    upgrade: safe
+  register: apt_upgrade_response
+  changed_when: not apt_upgrade_response.stdout.find('0 upgraded') != -1
+  when: ansible_os_family == "Debian" and system_upgrade|bool
+  tags:
+    - apt
+
+- name: link dnf.conf
+  become: 'yes'
+  file:
+    src: /etc/dnf/dnf.conf
+    dest: /etc/yum.conf
+    owner: root
+    group: root
+    state: link
+  when: ansible_distribution == "Fedora"
+  tags:
+    - dnf
+    - yum
+
+- name: import RedHat RPM key
+  become: 'yes'
+  rpm_key:
+    state: present
+    key: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ item }}
+  with_items:
+    - "{{ redhat_rpm_key }}"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - dnf
+    - rpm
+    - yum
+
+- name: set yum.conf gpgcheck
+  become: 'yes'
+  lineinfile:
+    regexp: "^gpgcheck="
+    line: "gpgcheck=1"
+    dest: /etc/yum.conf
+    mode: 0644
+    state: present
+    create: 'no'
+    backrefs: 'yes'
+  when: ansible_os_family == "RedHat"
+  tags:
+    - dnf
+    - yum
+
+- name: set yum.conf clean_requirements
+  become: 'yes'
+  lineinfile:
+    line: "clean_requirements_on_remove=True"
+    dest: /etc/yum.conf
+    mode: 0644
+    state: present
+    create: 'yes'
+    insertafter: "[main]"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - dnf
+    - yum
+
+- name: set yum.conf localpkg_gpgcheck
+  become: 'yes'
+  lineinfile:
+    line: "localpkg_gpgcheck=1"
+    dest: /etc/yum.conf
+    mode: 0644
+    state: present
+    create: 'yes'
+    insertafter: "[main]"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - dnf
+    - yum
+
+- name: comment yum.conf repo_gpgcheck
+  become: 'yes'
+  lineinfile:
+    line: "# repo_gpgcheck=1"
+    dest: /etc/yum.conf
+    mode: 0644
+    state: present
+    create: 'yes'
+    insertafter: "[main]"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - dnf
+    - yum
+
+- name: enable centos PowerTools repo
+  become: 'yes'
+  lineinfile:
+    regexp: "^enabled="
+    line: "enabled=1"
+    dest: /etc/yum.repos.d/CentOS-PowerTools.repo
+    mode: 0644
+    state: present
+    create: 'no'
+  when: ansible_distribution == "CentOS"
+  tags:
+    - dnf
+    - yum
+
+- name: update dnf cache
+  become: 'yes'
+  dnf:
+    update_cache: 'yes'
+  when: ansible_os_family == "RedHat"
+  notify:
+    - dnf autoremove
+  tags:
+    - dnf
+    - yum
+
+- name: dnf upgrade
+  become: 'yes'
+  command: dnf --assumeyes upgrade-minimal
+  register: dnf_upgrade_response
+  changed_when: not dnf_upgrade_response.stdout.find('Nothing to do.') != -1
+  when: ansible_os_family == "RedHat" and system_upgrade|bool
+  tags:
+    - dnf
+    - yum
+
+- name: python-rpm installation
+  become: 'yes'
+  dnf:
+    name: "python2-rpm"
+    state: present
+  when: ansible_distribution == "RedHat"
+  tags:
+    - dnf
+    - yum
+    - packages
+    - firewalld
+...

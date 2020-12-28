@@ -1,0 +1,394 @@
+---
+- name: Test dnszone
+  hosts: ipaserver
+  become: true
+  gather_facts: true
+
+  tasks:
+
+  # Setup
+  - name: Setup testing environment
+    include_tasks: env_setup.yml
+
+  # Tests
+  - name: Verify if zone can be created with a specific SOA serial.
+    block:
+    - name: Create zone with serial, refresh, retry and expire.
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: SomeADMINpassword
+        name: testzone.local
+        serial: 4567
+        refresh: 70
+        retry: 89
+        expire: 200
+
+    - name: Verify zone was created with correct values.
+      shell: |
+         echo SomeADMINpassword | kinit -c {{ KRB5CCNAME }} admin
+         KRB5CCNAME={{ KRB5CCNAME }} ipa dnszone-show testzone.local
+         kdestroy -A -q -c {{ KRB5CCNAME }}
+      register: result
+      failed_when: |
+        result.failed or not (
+          "serial: 4567" in result.stdout
+          and "refresh: 70" in result.stdout
+          and "retry: 89" in result.stdout
+          and "expire: 200" in result.stdout
+        )
+
+    - name: Remove test zone.
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: SomeADMINpassword
+        name: testzone.local
+        state: absent
+
+    vars:
+      KRB5CCNAME: verify_bz_1876896
+
+  - name: Verify if a zone can have the the SOA serial modified to a specific value.
+    block:
+    - name: Create zone.
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: SomeADMINpassword
+        name: testzone.local
+        state: present
+
+    - name: Modify zone with serial, refresh, retry and expire.
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: SomeADMINpassword
+        name: testzone.local
+        serial: 4567
+        refresh: 70
+        retry: 89
+        expire: 200
+
+    - name: Verify zone was modified to the correct values
+      shell: |
+         echo SomeADMINpassword | kinit -c {{ KRB5CCNAME }} admin
+         KRB5CCNAME={{ KRB5CCNAME }} ipa dnszone-show testzone.local
+         kdestroy -A -q -c {{ KRB5CCNAME }}
+      register: result
+      failed_when: |
+        result.failed or not (
+          "serial: 4567" in result.stdout
+          and "refresh: 70" in result.stdout
+          and "retry: 89" in result.stdout
+          and "expire: 200" in result.stdout
+        )
+
+    - name: Remove test zone.
+      freeipa.ansible_freeipa.ipadnszone:
+        ipaadmin_password: SomeADMINpassword
+        name: testzone.local
+        state: absent
+
+    vars:
+      KRB5CCNAME: verify_bz_1876896
+
+  - name: Ensure zone is present.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_sync_ptr: true
+      dynamic_update: true
+      dnssec: true
+      allow_transfer:
+        - 1.1.1.1
+        - 2.2.2.2
+      allow_query:
+        - 1.1.1.1
+        - 2.2.2.2
+      serial: 1234
+      refresh: 3600
+      retry: 900
+      expire: 1209600
+      minimum: 3600
+      ttl: 60
+      default_ttl: 60
+      name_server: ipaserver.test.local.
+      skip_nameserver_check: true
+      admin_email: admin@example.com
+      nsec3param_rec: "1 7 100 abcd"
+      state: present
+    register: result
+    failed_when: not result.changed
+
+  - name: Set serial to 1234, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      serial: 1234
+    register: result
+    failed_when: result.changed
+
+  - name: Set different nsec3param_rec.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      nsec3param_rec: "2 8 200 abcd"
+    register: result
+    failed_when: not result.changed
+
+  - name: Set same nsec3param_rec.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      nsec3param_rec: "2 8 200 abcd"
+    register: result
+    failed_when: result.changed
+
+  - name: Set default_ttl to 1200
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      default_ttl: 1200
+    register: result
+    failed_when: not result.changed
+
+  - name: Set default_ttl to 1200, again
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      default_ttl: 1200
+    register: result
+    failed_when: result.changed
+
+  - name: Set ttl to 900
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      ttl: 900
+    register: result
+    failed_when: not result.changed
+
+  - name: Set ttl to 900, again
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      ttl: 900
+    register: result
+    failed_when: result.changed
+
+  - name: Set minimum to 1000
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      minimum: 1000
+    register: result
+    failed_when: not result.changed
+
+  - name: Set minimum to 1000, again
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      minimum: 1000
+    register: result
+    failed_when: result.changed
+
+  - name: Set expire to 1209601
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      expire: 1209601
+    register: result
+    failed_when: not result.changed
+
+  - name: Set expire to 1209601, again
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      expire: 1209601
+    register: result
+    failed_when: result.changed
+
+  - name: Set retry to 1200.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      retry: 1200
+    register: result
+    failed_when: not result.changed
+
+  - name: Set retry to 1200, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      retry: 1200
+    register: result
+    failed_when: result.changed
+
+  - name: Set refresh to 4000.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      refresh: 4000
+    register: result
+    failed_when: not result.changed
+
+  - name: Set refresh to 4000, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      refresh: 4000
+    register: result
+    failed_when: result.changed
+
+  - name: Set serial to 12345.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      serial: 12345
+    register: result
+    failed_when: not result.changed
+
+  - name: Set serial to 12345, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      serial: 12345
+    register: result
+    failed_when: result.changed
+
+  - name: Set dnssec to false.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      dnssec: false
+    register: result
+    failed_when: not result.changed
+
+  - name: Set dnssec to false, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      dnssec: false
+    register: result
+    failed_when: result.changed
+
+  - name: Set allow_sync_ptr to false.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_sync_ptr: false
+    register: result
+    failed_when: not result.changed
+
+  - name: Set allow_sync_ptr to false, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_sync_ptr: false
+    register: result
+    failed_when: result.changed
+
+  - name: Set dynamic_update to false.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      dynamic_update: false
+    register: result
+    failed_when: not result.changed
+
+  - name: Set dynamic_update to false, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      dynamic_update: false
+    register: result
+    failed_when: result.changed
+
+  - name: Update allow_transfer.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_transfer:
+        - 1.1.1.1
+        - 2.2.2.2
+        - 3.3.3.3
+    register: result
+    failed_when: not result.changed
+
+  - name: Update allow_transfer, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_transfer:
+        - 1.1.1.1
+        - 2.2.2.2
+        - 3.3.3.3
+    register: result
+    failed_when: result.changed
+
+  - name: Remove allow transfer.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_transfer: []
+    register: result
+    failed_when: not result.changed
+
+  - name: Remove allow transfer, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_transfer: []
+    register: result
+    failed_when: result.changed
+
+  - name: Update allow_query.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_query:
+        - 1.1.1.1
+        - 2.2.2.2
+        - 3.3.3.3
+    register: result
+    failed_when: not result.changed
+
+  - name: Update allow_query, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_query:
+        - 1.1.1.1
+        - 2.2.2.2
+        - 3.3.3.3
+    register: result
+    failed_when: result.changed
+
+  - name: Ensure allow query is empty.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_query: []
+    register: result
+    failed_when: not result.changed
+
+  - name: Ensure allow query is empty, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      allow_query: []
+    register: result
+    failed_when: result.changed
+
+  - name: Update admin email.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      admin_email: admin2@example.com
+    register: result
+    failed_when: not result.changed
+
+  - name: Update admin email, again.
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: SomeADMINpassword
+      name: testzone.local
+      admin_email: admin2@example.com
+    register: result
+    failed_when: result.changed
+
+  # Teardown
+  - name: Teardown testing environment
+    include_tasks: env_teardown.yml

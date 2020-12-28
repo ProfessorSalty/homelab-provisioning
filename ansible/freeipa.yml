@@ -1,0 +1,11 @@
+- name: Setup a FreeIPA server
+  hosts: default
+  become: true
+  remote_user: toor
+  vars_files: freeipa-vars.yml
+  collections:
+    - freeipa.ansible_freeipa
+
+  roles:
+    - ipaserver
+

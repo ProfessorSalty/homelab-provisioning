@@ -1,0 +1,11 @@
+---
+- name: Host present with managedby_host
+  hosts: ipaserver
+  become: true
+
+  tasks:
+  - freeipa.ansible_freeipa.ipahost:
+      ipaadmin_password: SomeADMINpassword
+      name: host01.exmaple.com
+      managedby_host: server.exmaple.com
+      force: yes

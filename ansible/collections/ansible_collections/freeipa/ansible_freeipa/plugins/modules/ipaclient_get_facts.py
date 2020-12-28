@@ -1,0 +1,1 @@
+../../roles/ipaclient/library/ipaclient_get_facts.py

@@ -1,0 +1,38 @@
+---
+- name: Ensure test user is absent.
+  freeipa.ansible_freeipa.ipauser:
+    ipaadmin_password: SomeADMINpassword
+    name: user01
+    state: absent
+
+- name: Ensure test group is absent.
+  freeipa.ansible_freeipa.ipagroup:
+    ipaadmin_password: SomeADMINpassword
+    name: group01
+    state: absent
+
+- name: Ensure test hostgroup is absent.
+  freeipa.ansible_freeipa.ipahostgroup:
+    ipaadmin_password: SomeADMINpassword
+    name: hostgroup01
+    state: absent
+
+- name: Ensure test host is absent.
+  freeipa.ansible_freeipa.ipahost:
+    ipaadmin_password: SomeADMINpassword
+    name: "{{ host1_fqdn }}"
+    state: absent
+
+- name: Ensure test service is absent.
+  freeipa.ansible_freeipa.ipaservice:
+    ipaadmin_password: SomeADMINpassword
+    name: "service01/{{ host1_fqdn }}"
+    state: absent
+
+- name: Ensure test roles are absent.
+  freeipa.ansible_freeipa.iparole:
+    ipaadmin_password: SomeADMINpassword
+    name:
+    - renamerole
+    - testrole
+    state: absent

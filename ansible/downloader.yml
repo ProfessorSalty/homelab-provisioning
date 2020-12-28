@@ -1,0 +1,10 @@
+---
+- name: Setup downloader
+  hosts: default
+  become: true
+  remote_user: toor
+
+  tasks:
+    - name: Mount the configs directory
+    - name: Mount the media directory
+    - name: Setup and run the Docker stack

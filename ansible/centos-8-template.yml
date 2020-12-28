@@ -1,0 +1,68 @@
+---
+- name: Setup Centos08
+  hosts: all
+  become: true
+  remote_user: root
+  vars_files: freeipa-vars.yml
+  collections:
+    - freeipa.ansible_freeipa
+
+  roles:
+    - ipaserver
+
+  pre_tasks:
+    - name: Set authorized key for user, copying it from current user
+      ansible.posix.authorized_key:
+        user: root
+        state: present
+        key: "{{ lookup('file', public_key_file) }}"
+
+  tasks:
+    - name: Download Netdata repo script
+      ansible.builtin.get_url:
+        url: https://packagecloud.io/install/repositories/netdata/netdata/script.rpm.sh
+        dest: /tmp/
+        mode: 0755
+    - name: Execute Netdata repo script
+      shell: sh script.rpm.sh
+      args:
+        chdir: /tmp/
+    - name: Install EPEL repo
+      ansible.builtin.dnf:
+        name: epel-release
+        state: present
+        update_cache: true
+    - name: Enable CentOS8 PowerTools repo
+      # NB: doesn't run command  `dnf config-manager --set-enabled PowerTools` as can't make that idempotent
+      # https://github.com/ansible/ansible/issues/46963#issuecomment-722999113
+      lineinfile:
+        path: /etc/yum.repos.d/CentOS-PowerTools.repo
+        create: false # so raise error if not already installed
+        regexp: enabled=
+        line: enabled=1
+    - name: Install mosh (MObile SHell)
+      ansible.builtin.dnf:
+        name: mosh
+        state: present
+    - name: Install Netdata
+      ansible.builtin.dnf:
+        name: netdata
+        state: present
+    - name: Install fish
+      ansible.builtin.dnf:
+        name: fish
+        state: present
+    - name: Change shell to fish
+      ansible.builtin.user:
+        name: root
+        shell: /usr/bin/fish
+    - name: Setup rsyslog
+      ansible.builtin.lineinfile:
+        line: $PreserveFQDN on\n\n*.* @{{ syslog_server_address }}:514
+        path: /etc/rsyslog.conf
+
+  handlers:
+    - name: start_netdata
+      service:
+        name: netdata
+        state: started

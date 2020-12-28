@@ -1,0 +1,7 @@
+---
+- ipaadmin_password: softly oracular rotund
+- ipadm_password: arcana farrier sailfish
+- ipaserver_domain: intothe.stream
+- ipaserver_realm: INTOTHE.STREAM
+- ipaserver_hostname: freeipa.intothe.stream
+- ipaserver_cert_password: cattle its cheque mockup light

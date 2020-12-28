@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  author: Thomas Sjögren
+  description: CentOS, Debian and Ubuntu hardening. systemd edition.
+  license: apache
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - buster
+    - name: EL
+      versions:
+        - 8
+    - name: Ubuntu
+      versions:
+        - focal
+  galaxy_tags:
+    - centos
+    - cis
+    - debian
+    - disa
+    - hardening
+    - security
+    - system
+    - systemd
+    - ubuntu

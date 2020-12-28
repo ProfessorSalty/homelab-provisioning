@@ -1,0 +1,14 @@
+---
+- hosts: all
+  any_errors_fatal: true
+  become: true
+  tasks:
+    - include_role:
+        name: konstruktoid.hardening
+
+- hosts: all
+  any_errors_fatal: true
+  become: true
+  tasks:
+    - include: debug_facts.yml
+...

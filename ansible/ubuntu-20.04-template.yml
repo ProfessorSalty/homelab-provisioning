@@ -1,0 +1,76 @@
+- name: Provision Ubuntu Template for Docker
+  hosts: default
+  become: true
+  remote_user: toor
+
+  pre_tasks:
+    - name: Set authorized key for user, copying it from current user
+      ansible.posix.authorized_key:
+        user: toor
+        state: present
+        key: "{{ lookup('file', public_key_file) }}"
+
+  tasks:
+    - name: Install mosh (MObile SHell)
+      ansible.builtin.apt:
+        name: mosh
+        state: present
+    - name: Install fish
+      ansible.builtin.apt:
+        name: fish
+        state: present
+        update_cache: yes
+    - name: Change shell to fish
+      ansible.builtin.user:
+        name: toor
+        shell: /usr/bin/fish
+    - name: Setup rsyslog
+      ansible.builtin.lineinfile:
+        line: $PreserveFQDN on\n\n*.* @{{ syslog_server_address }}:514
+        path: /etc/rsyslog.conf
+    - name: Install Netdata dependencies
+      ansible.builtin.apt:
+        name:
+          [
+            "zlib1g-dev",
+            "uuid-dev",
+            "libuv1-dev",
+            "liblz4-dev",
+            "libjudy-dev",
+            "libssl-dev",
+            "libmnl-dev",
+            "gcc",
+            "make",
+            "git",
+            "autoconf",
+            "autoconf-archive",
+            "autogen",
+            "automake",
+            "pkg-config",
+            "curl",
+            "python",
+            "cmake",
+          ]
+        state: present
+        update_cache: yes
+    - name: Clone Netdata repo
+      ansible.builtin.git:
+        depth: 1
+        dest: /opt/netdata
+        repo: https://github.com/netdata/netdata.git
+    - name: Get Netdata status
+      stat:
+        path: /opt/netdata
+      register: netdata_clone
+    - name: Install Netdata using the script in the repo
+      when: netdata_clone.stat.isdir| default(False) and netdata_clone.stat.isdir
+      shell: bash netdata-installer.sh --dont-wait --libs-are-really-here
+      args:
+        chdir: /opt/netdata
+      notify: start_netdata
+
+  handlers:
+    - name: start_netdata
+      service:
+        name: netdata
+        state: started

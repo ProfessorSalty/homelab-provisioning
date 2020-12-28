@@ -1,0 +1,6 @@
+**/.DS_Store
+packer_cache/
+**/*.crt
+passwords/
+*.tfstate*
+**/*.private.pkrvars.*

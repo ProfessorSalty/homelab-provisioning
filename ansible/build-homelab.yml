@@ -1,0 +1,7 @@
+- name: Setup homelab
+  hosts: all
+
+  tasks:
+    - name: Test
+      loop: "{{ homelabfiles }}"
+      include_tasks: "tasks/{{ item }}"

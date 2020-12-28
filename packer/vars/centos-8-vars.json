@@ -1,0 +1,8 @@
+{
+    "iso_file"            : "CentOS-8.2.2004-x86_64-dvd1.iso",
+    "template_name"       : "centos-8-template",
+    "template_description": "Ready-to-run build of CentOS 8 with FreeIPA server. * Netdata * Mosh * Fish * Rsyslog pointing to central server",
+    "template_username"   : "root",
+    "proxmox_vm_id"       : "9002",
+    "boot_command"        : "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"
+}

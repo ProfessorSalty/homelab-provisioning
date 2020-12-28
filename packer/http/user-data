@@ -1,0 +1,23 @@
+#cloud-config
+autoinstall:
+    version: 1
+    locale: en_US
+    keyboard:
+        layout: en
+    apt:
+        proxy: http://192.168.1.4:3142
+    ssh:
+        install-server: true
+        allow-pw: false
+    packages:
+        - qemu-guest-agent
+    identity:
+        hostname: docker
+        username: toor
+        # openssl passwd -6 [-salt <salt>] <username>
+        password: $6$csTyJPQAaXY6nRnj$nPVbjrl.bMdivp5GPbDwIuoPPvlsN/iZEEkp7L4qG6y936S6qLUBJ4TbYRx3F2RcG0MENsRJBOMtzalk0SKXI0
+    storage:
+        layout:
+            name: direct
+        swap:
+            size: 0

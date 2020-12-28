@@ -1,0 +1,1 @@
+../../roles/ipaserver/library/ipaserver_setup_kra.py
