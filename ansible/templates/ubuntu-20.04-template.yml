@@ -1,0 +1,18 @@
+- name: Provision Ubuntu Template 
+  hosts: default
+  become: true
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  pre_tasks:
+    - include_role: 
+        name: addkey
+
+  tasks:
+    - include_role: 
+        name: setup
+    - include_role: 
+        name: rsyslog
+    - include_role: 
+        name: netdata

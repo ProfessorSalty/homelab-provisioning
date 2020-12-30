@@ -4,3 +4,5 @@ packer_cache/
 passwords/
 *.tfstate*
 **/*.private.pkrvars.*
+ansible/roles
+ansible/collections

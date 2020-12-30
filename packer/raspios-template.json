@@ -43,7 +43,7 @@
     "provisioners": [{
             "type"            : "ansible",
             "playbook_file"   : "ansible/{{ user `template_name` }}.yml",
-            "galaxy_file"     : "ansible/{{ user `template_name` }}-requirements.yml",
+            "galaxy_file"     : "ansible/requirements/{{ user `template_name` }}-requirements.yml",
             "roles_path"      : "ansible/roles",
             "collections_path": "ansible/collections",
             "extra_arguments" : [

@@ -1,0 +1,25 @@
+---
+- name: Setup Centos08
+  hosts: all
+  become: true
+  remote_user: root
+  vars_files: freeipa-vars.yml
+  collections:
+    - freeipa.ansible_freeipa
+    - professorsalty.homelab
+
+  pre_tasks:
+    - include_role:
+        name: addkey
+
+  tasks:
+    - include_role:
+        name: centosrepos
+    - include_role: 
+        name: netdata
+    - include_role: 
+        name: setup
+    - include_role: 
+        name: rsyslog
+    - include_role: 
+        name: ipaserver

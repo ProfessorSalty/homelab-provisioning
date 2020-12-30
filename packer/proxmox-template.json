@@ -47,7 +47,7 @@
                 {
                     "type"             : "scsi",
                     "disk_size"        : "128G",
-                    "storage_pool"     : "dbs",
+                    "storage_pool"     : "local-lvm",
                     "storage_pool_type": "lvm-thin",
                     "format"           : "raw"
                 }
@@ -63,8 +63,8 @@
         },
         {
             "type"            : "ansible",
-            "playbook_file"   : "ansible/{{ user `template_name` }}.yml",
-            "galaxy_file"     : "ansible/{{ user `template_name` }}-requirements.yml",
+            "playbook_file"   : "ansible/templates/{{ user `template_name` }}.yml",
+            "galaxy_file"     : "ansible/requirements/{{ user `template_name` }}-requirements.yml",
             "roles_path"      : "ansible/roles",
             "collections_path": "ansible/collections",
             "extra_arguments" : [

@@ -2,6 +2,8 @@ collections:
   - community.general
   - ansible.posix
   - freeipa.ansible_freeipa
+  - name: https://github.com/ProfessorSalty/professorsalt.homelab
+    type: git
 
 roles:
   - konstruktoid.hardening

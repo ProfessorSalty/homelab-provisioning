@@ -10,6 +10,8 @@ locals {
   os_type_ubuntu          = "ubuntu"
   os_type_centos          = "centos"
   transcode_drive         = "transcode"
+  storage_drive           = "storage"
+  download_drive          = "downloads"
   fast_drive              = "db"
   # This is necessary because the Telmate/proxmox plugin does not properly handle hard drives
   DUMMY_DRIVE = "DUMMY_DRIVE"
@@ -41,7 +43,7 @@ module "jellyfin" {
   disks = [{
     size    = "64G"
     storage = local.DUMMY_DRIVE
-  },{
+    }, {
     size    = "450G"
     storage = local.transcode_drive
     ssd     = true
@@ -63,20 +65,33 @@ module "jellyfin" {
 # }
 
 # // *arr, nzbget, calibre, calibre-web
-# module "downloader" {
-#     source = "./modules/homelab"
-#     name = "downloader"
-#     target_node = var.proxmox_primary
-#     vmid = 506
-#     clone_source = local.ubuntu_docker_template
-#     cores = 2
-#     memory = 16384
+module "downloader" {
+  source       = "./modules/homelab"
+  name         = "downloader"
+  target_node  = var.proxmox_primary
+  vmid         = 506
+  clone_source = local.ubuntu_docker_template
+  cores        = 2
+  memory       = 16384
 
-#     networks = [{
-#       model = "virtio"
-#       bridge = var.downloader_bridge
-#     }]
-# }
+  networks = [{
+    model  = "virtio"
+    bridge = var.downloader_bridge
+  }]
+
+  disks = [{
+    size    = "64G"
+    storage = local.DUMMY_DRIVE
+    },
+    {
+      size    = "1500G"
+      storage = local.storage_drive
+    },
+    {
+      size    = "400G"
+      storage = local.download_drive
+  }]
+}
 
 # module "torrent" {
 #     source = "./module/homelab"

@@ -4,7 +4,7 @@ ANSIBLE_FOLDER=ansible
 PACKER_FOLDER=packer
 
 function run-packer-build {
-    packer build -var-file=$PACKER_FOLDER/template.private.pkrvars.json \
+    packer build -var-file=$PACKER_FOLDER/vars/template.private.pkrvars.json \
         -var-file=$PACKER_FOLDER/vars/$2 \
         -var 'ansible_folder='$ANSIBLE_FOLDER \
         $PACKER_FOLDER/$1
