@@ -1,47 +1,25 @@
 - name: Provision RaspiOS template
   hosts: default
-  become: true
   remote_user: pi
+  collections:
+      - professorsalty.homelab
 
   pre_tasks:
-    - name: Set authorized key for user, copying it from current user
-      ansible.posix.authorized_key:
-        user: toor
-        state: present
-        key: "{{ lookup('file', public_key_file) }}"
+    - include_role: 
+        name: addkey
 
   tasks:
-    - name: Install mosh (MObile SHell)
-      ansible.builtin.apt:
-        name: mosh
-        state: present
-    - name: Install fish
-      ansible.builtin.apt:
-        name: fish
-        state: present
-        update_cache: yes
-    - name: Change shell to fish
-      ansible.builtin.user:
-        name: toor
-        shell: /usr/bin/fish
-    - name: Setup rsyslog
-      ansible.builtin.lineinfile:
-        line: $PreserveFQDN on\n\n*.* @{{ syslog_server_address }}:514
-        path: /etc/rsyslog.conf
-    - name: Install rng-tools
-      ansible.builtin.apt:
-        name: rng-tools
-        state: present
-        update_cache: yes
-    # https://www.nico-maas.de/?p=1562
-    - name: Setup hardware rng
-      ansible.builtin.lineinfile:
-        line: HRNGDEVICE=/dev/hwrng
-        file: /etc/default/rng-tools
-      notify: restart_rng-tools
-
-  handlers:
-      - name: restart_rng-tools
-        ansible.builtin.service:
-          name: rng-tools
-          state: restarted
+    - include_role: 
+        name: setup
+    - include_role: 
+        name: rsyslog
+    - include_role: 
+        name: netdata
+    - include_role:
+        name: rnngtools
+    - include_role:
+        name: jnv.unattended-upgrades
+      vars:
+        unattended_automatic_reboot: yes
+        unattended_origins_patterns:
+          - 'origin=Raspbian,codename=${distro_codename},label=Raspbian'

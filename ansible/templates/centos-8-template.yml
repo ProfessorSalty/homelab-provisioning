@@ -1,7 +1,6 @@
 ---
 - name: Setup Centos08
-  hosts: all
-  become: true
+  hosts: default
   remote_user: root
   vars_files: freeipa-vars.yml
   collections:

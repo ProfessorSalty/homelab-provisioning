@@ -7,3 +7,4 @@ collections:
 
 roles:
     - konstruktoid.hardening
+    - jnv.unattended-upgrades

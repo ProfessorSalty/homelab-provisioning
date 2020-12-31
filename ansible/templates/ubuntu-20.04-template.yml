@@ -15,3 +15,12 @@
         name: rsyslog
     - include_role: 
         name: netdata
+    - include_role:
+        name: jnv.unattended-upgrades
+      vars:
+        unattended_automatic_reboot: yes
+        unattended_origins_patterns:
+          - 'origin=Ubuntu,archive=${distro_codename}-security'
+          - 'o=Ubuntu,a=${distro_codename}'
+          - 'o=Ubuntu,a=${distro_codename}-updates'
+          - 'o=Ubuntu,a=${distro_codename}-proposed-updates'
