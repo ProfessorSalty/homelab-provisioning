@@ -1,8 +1,7 @@
 - import_playbook: ./ubuntu-20.04-template.yml
 
 - name: Provision Ubuntu Template with Docker
-  hosts: all
-  become: true
+  hosts: default
   remote_user: toor
   collections:
       - professorsalty.homelab
