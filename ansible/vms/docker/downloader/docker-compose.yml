@@ -1,0 +1,208 @@
+version: "3.7"
+services:
+  ###############################
+  #         Sonarr              #
+  ###############################
+  sonarr:
+    image: linuxserver/sonarr:preview
+    container_name: sonarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+    ports:
+      - "8989:8989"
+    volumes:
+      - ${SERVICES_ROOT}/${SONARR_ROOT:-sonarr}/config:/config
+      - ${TV_ROOT}:/tv
+      - ${DOWNLOADS_ROOT}:/downloads
+    restart: unless-stopped
+
+  ###############################
+  #         Radarr              #
+  ###############################
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+    ports:
+      - "7878:7878"
+    volumes:
+      - ${SERVICES_ROOT}/${RADARR_ROOT:-radarr}/config:/config
+      - ${MOVIES_ROOT}:/movies
+      - ${DOWNLOADS_ROOT}:/downloads
+    restart: unless-stopped
+
+  ###############################
+  #         Lidarr              #
+  ###############################
+  lidarr:
+    image: linuxserver/lidarr
+    container_name: lidarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+    ports:
+      - "8686:8686"
+    volumes:
+      - ${SERVICES_ROOT}/${LIDARR_ROOT:-lidarr}/config:/config
+      - ${MUSIC_ROOT}:/music
+      - ${DOWNLOADS_ROOT}:/downloads
+    restart: unless-stopped
+
+  ###############################
+  #         Bazarr              #
+  ###############################
+  bazarr:
+    image: linuxserver/bazarr
+    container_name: bazarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+    ports:
+      - "6767:6767"
+    volumes:
+      - ${SERVICES_ROOT}/${BAZARR_ROOT:-bazzar}/config:/config
+      - ${MOVIES_ROOT}:/movies
+      - ${TV_ROOT}:/tv
+    restart: unless-stopped
+
+  ###############################
+  #         Mylarr              #
+  ###############################
+  mylar:
+    image: linuxserver/mylar3
+    container_name: mylar
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - ${SERVICES_ROOT}/${MYLAR_ROOT:-mylar}:/config
+      - ${COMICS_ROOT}:/comics
+      - ${DOWNLOADS_ROOT}:/downloads
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+
+  ###############################
+  #         Jackett             #
+  ###############################
+  jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+    ports:
+      - "9117:9117"
+    volumes:
+      - ${SERVICES_ROOT}/${JACKETT_ROOT:-jackett}/config:/config
+      - ${DOWNLOADS_ROOT}:/downloads
+    restart: unless-stopped
+
+  ###############################
+  #         nzbhydra            #
+  ###############################
+  nzbhydra:
+    image: linuxserver/nzbhydra2
+    container_name: nzbhydra
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    ports:
+      - "5076:5076"
+    volumes:
+      - ${SERVICES_ROOT}/${NZBHYDRA_ROOT:-nzbhydra}/config:/config
+      - ${DOWNLOADS_ROOT}:/downloads
+    restart: unless-stopped
+
+  ###############################
+  #           Ombi              #
+  ###############################
+  ombi:
+    image: linuxserver/ombi
+    container_name: ombi
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+    ports:
+      - "3579:3579"
+    volumes:
+      - ${SERVICES_ROOT}/${OMBI_ROOT:-ombi}:/config
+    restart: unless-stopped
+
+  ###############################
+  #           rtorrent          #
+  ###############################
+  rtorrent:
+    image: romancin/rutorrent-flood:latest
+    container_name: rtorrent
+    environment:
+      - PGID=${PGID}
+      - PUID=${PUID}
+      - TZ
+    ports:
+      - "3000:3000"
+      - "51415-51415:51415-51415"
+    volumes:
+      - ${SERVICES_ROOT}/${RTORRENT_ROOT:-rtorrent}:/config
+      - ${TORRENTS_ROOT}:/downloads
+    restart: unless-stopped
+
+  ##############################
+  #        LazyLibrian         #
+  ##############################
+  lazylibrarian:
+      image: linuxserver/lazylibrarian
+      container_name: lazylibrarian
+      environment:
+          - PUID=1000
+          - PGID=1000
+          - TZ
+          - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
+      volumes:
+          - ${SERVICES_ROOT}/${LAZYLIBRARIAN_ROOT:-lazylibrarian}/config:/config
+          - ${DOWNLOADS_ROOT}:/downloads
+          - ${BOOKS_ROOT}:/books
+      restart: unless-stopped
+
+  ##############################
+  #        Exportarr           #
+  ##############################
+  sonarr-exporter:
+      image: onedr0p/exportarr:master
+      container_name: sonarr-exporter
+      restart: unless-stopped
+      command: ["exportarr", "sonarr"]
+      networks:
+          - exporters
+      environment:
+          PORT: 9707
+          URL: "http://sonarr:8989"
+          APIKEY: ${SONARR_API_KEY}
+          ENABLE_EPISODE_QUALITY_METRICS: "false"
+          DISABLE_SSL_VERIFY: "true"
+      expose:
+          - 9707
+
+  radarr-exporter:
+      image: onedr0p/exportarr:master
+      container_name: radarr-exporter
+      restart: unless-stopped
+      command: ["exportarr", "radarr"]
+      networks:
+          - exporters
+      environment:
+          PORT: 9708
+          URL: "http://radarr:7878"
+          APIKEY: ${RADARR_API_KEY}
+          DISABLE_SSL_VERIFY: "true"
+      expose:
+          - 9708

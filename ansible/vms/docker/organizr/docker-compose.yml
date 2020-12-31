@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  organizr:
+    image: organizrtools/organizr-v2
+    container_name: organizr
+    environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ
+    volumes:
+        - ${SERVICES_ROOT}/${ORGANIZR_ROOT:-organizr}/config:/config
+        - ${SERVICES_ROOT}/${ORGANIZR_ROOT:-organizr}/db:/db
+    restart: unless-stopped
