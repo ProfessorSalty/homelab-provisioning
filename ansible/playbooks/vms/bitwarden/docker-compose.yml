@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  bitwarden:
+    image: bitwardenrs/server
+    restart: unless-stopped
+    volumes:
+      - ${SERVICES_ROOT}/${BITWARDEN_ROOT:-bitwarden}:/data
+    environment:
+      WEBSOCKET_ENABLED: 'true' # Required to use websockets
+      SIGNUPS_ALLOWED: 'false'   # set to false to disable signups

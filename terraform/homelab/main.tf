@@ -26,41 +26,27 @@ locals {
 #   vmid         = 400
 # }
 
-module "jellyfin" {
-  source       = "https://github.com/ProfessorSalty/terraform-homelab"
-  target_node  = local.proxmox_primary
-  clone_source = local.ubuntu_docker_template
-  os_type      = local.os_type_ubuntu
-  name         = "jellyfin-test"
-  vmid         = 505
-  cores        = 10
-  memory       = 32768
-
-  networks = [{
-    bridge = local.streaming_bridge
-  }]
-
-  disks = [{
-    size    = "64G"
-    storage = local.DUMMY_DRIVE
-    }, {
-    size    = "450G"
-    storage = local.transcode_drive
-    ssd     = true
-  }]
-}
-
-# module "ampache" {
-#   source = "https://github.com/ProfessorSalty/terraform-homelab"
-#   name = "ampache"
-#   target_node = var.proxmox_primary
-#   vmid = 512
+# module "mediaserver" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   target_node  = local.proxmox_primary
 #   clone_source = local.ubuntu_docker_template
-#   cores = 4
-#   memory = 4096
+#   os_type      = local.os_type_ubuntu
+#   name         = "mediaserver"
+#   vmid         = 505
+#   cores        = 10
+#   memory       = 32768
 
 #   networks = [{
-#     network_bridge = local.streaming_bridge
+#     bridge = local.streaming_bridge
+#   }]
+
+#   disks = [{
+#     size    = "64G"
+#     storage = local.DUMMY_DRIVE
+#     }, {
+#     size    = "450G"
+#     storage = local.transcode_drive
+#     ssd     = true
 #   }]
 # }
 
@@ -76,7 +62,7 @@ module "downloader" {
 
   networks = [{
     model  = "virtio"
-    bridge = var.downloader_bridge
+    bridge = local.downloader_bridge
   }]
 
   disks = [{
@@ -93,104 +79,98 @@ module "downloader" {
   }]
 }
 
-module "torrent" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "downloader"
-    target_node = var.proxmox_primary
-    vmid = 506
-    clone_source = local.ubuntu_docker_template
-    cores = 2
-    memory = 4096
+# module "torrent" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "downloader"
+#   target_node  = var.proxmox_primary
+#   vmid         = 506
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 2
+#   memory       = 4096
 
-    networks = [{
-      bridge = var.torrent_bridge
-    }]
-}
+#   networks = [{
+#     bridge = var.torrent_bridge
+#   }]
+# }
 
-// nextcloud, papermerge, filestash
-module "office" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "office"
-    target_node = var.proxmox_secondary
-    vmid = 508
-    clone_source = local.ubuntu_docker_template
-    cores = 2
-    memory = 4096
-}
+# // nextcloud, papermerge, filestash
+# module "office" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "office"
+#   target_node  = var.proxmox_secondary
+#   vmid         = 508
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 2
+#   memory       = 4096
+# }
 
-module "bitwarden" {
-    name = "bitwarden"
-    target_node = var.proxmox_secondary
-    vmid = 509
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
-}
+# module "bitwarden" {
+#   name         = "bitwarden"
+#   target_node  = var.proxmox_secondary
+#   vmid         = 509
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 4
+#   memory       = 4096
+# }
 
-module "friendica" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "friendica"
-    target_node = var.proxmox_secondary
-    vmid = 510
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
-}
+# module "friendica" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "friendica"
+#   target_node  = var.proxmox_secondary
+#   vmid         = 510
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 4
+#   memory       = 4096
+# }
 
-module "mastodon" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "mastodon"
-    target_node = var.proxmox_secondary
-    vmid = 511
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
-}
+# module "mailserver" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "mailserver"
+#   target_node  = var.proxmox_secondary
+#   vmid         = 513
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 4
+#   memory       = 4096
+# }
 
-module "mailserver" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "mailserver"
-    target_node = var.proxmox_secondary
-    vmid = 513
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
-}
+# module "git" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "git"
+#   target_node  = var.proxmox_primary
+#   vmid         = 516
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 4
+#   memory       = 4096
 
-module "git" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "git"
-    target_node = var.proxmox_primary
-    vmid = 516
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
+#   disks = [{
+#     size    = "64G"
+#     storage = local.DUMMY_DRIVE
+#     },
+#     {
+#       size    = "50G"
+#       type    = "scsi"
+#       storage = "disk1"
+#   }]
+# }
 
-    disks = [{
-      size            = "50G"
-      type            = "scsi"
-      storage         = "disk1"
-    }]
-}
+# // element, jitsi
+# module "chat" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "chat"
+#   target_node  = var.proxmox_secondary
+#   vmid         = 515
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 4
+#   memory       = 4096
+# }
 
-// element, jitsi
-module "chat" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "chat"
-    target_node = var.proxmox_secondary
-    vmid = 515
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
-}
-
-// home assistant, node RED, thingspeak
-module "automation" {
-    source = "https://github.com/ProfessorSalty/terraform-homelab"
-    name = "automation"
-    target_node = var.proxmox_secondary
-    vmid = 514
-    clone_source = local.ubuntu_docker_template
-    cores = 4
-    memory = 4096
-}
+# // home assistant, node RED, thingspeak
+# module "automation" {
+#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+#   name         = "automation"
+#   target_node  = var.proxmox_secondary
+#   vmid         = 514
+#   clone_source = local.ubuntu_docker_template
+#   cores        = 4
+#   memory       = 4096
+# }

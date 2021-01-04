@@ -4,8 +4,8 @@ packer_cache/
 passwords/
 *.tfstate*
 **/*.private.pkrvars.*
-ansible/roles
-ansible/collections
+**/ansible/roles/**/*
+**/ansible/collections/**/*
 
 # Local .terraform directories
 **/.terraform/*
@@ -41,3 +41,5 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+**/.env$

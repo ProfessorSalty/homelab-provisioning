@@ -1,0 +1,35 @@
+version: "3.7"
+###############################
+#           Friendica         #
+###############################
+services:
+  db:
+    image: mariadb
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_USER=friendica
+      - MYSQL_PASSWORD=${FRIENDICA_DB_PASSWORD}
+      - MYSQL_DATABASE=friendica
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+
+  app:
+    image: friendica
+    restart: always
+    volumes:
+      - friendica:/var/www/html
+    ports:
+      - "80:80"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=friendica
+      - MYSQL_PASSWORD=${FRIENDICA_DB_PASSWORD}
+      - MYSQL_DATABASE=friendica
+      - FRIENDICA_ADMIN_MAIL=admin@${ROOT_DOMAIN}
+    depends_on:
+      - db
+
+volumes:
+  db:
+  friendica:

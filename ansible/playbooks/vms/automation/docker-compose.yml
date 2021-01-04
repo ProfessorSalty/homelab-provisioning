@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  ###############################
+  #           Node-Red          #
+  ###############################
+  node-red:
+    image: nodered/node-red:latest
+    environment:
+      - TZ
+    ports:
+      - "1880:1880"
+    volumes:
+      - ${SERVICES_ROOT}/${NODE_RED_ROOT:-node-red}:/data
+  ###############################
+  #           Mosquitto         #
+  ###############################
+  mosquitto:
+    image: eclipse-mosquitto
+    environment:
+      - TZ
+    volumes:
+      - ${SERVICES_ROOT}/${MOSQUITTO_ROOT:-mostquitto}:/mosquitto
+    ports:
+      - "1883:1883"

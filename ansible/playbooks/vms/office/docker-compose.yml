@@ -1,5 +1,8 @@
 version: "3.7"
 services:
+  ###############################
+  #           Nextcloud         #
+  ###############################
   nextcloud-server:
     image: nginx:alpine
     restart: unless-stopped
@@ -8,7 +11,7 @@ services:
       - nextcloud-data
     volumes:
       - nextcloud:/var/www/html:ro
-      - ./configs/nextcloud/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ${NEXTCLOUD_DATA}:/var/www/html/data
       - ${SERVICES_ROOT}/${NEXTCLOUD_ROOT:-nextcloud}/config:/var/www/html/config
       - ${SERVICES_ROOT}/${NEXTCLOUD_ROOT:-nextcloud}/custom_apps:/var/www/html/custom_apps
@@ -64,3 +67,38 @@ services:
     restart: unless-stopped
     environment:
       - TZ
+
+  ###############################
+  #           Filestash         #
+  ###############################
+  filestash:
+    container_name: filestash
+    image: machines/filestash
+    restart: always
+    environment:
+      - APPLICATION_URL=files.${ROOT_DOMAIN}
+      - ONLYOFFICE_URL=http://onlyoffice
+    ports:
+      - "8334:8334"
+
+  onlyoffice:
+    container_name: filestash_oods
+    image: onlyoffice/documentserver
+    restart: always
+    
+  ###############################
+  #           Papermerge        #
+  ###############################
+  papermerge:
+    image: ghcr.io/linuxserver/papermerge
+    container_name: papermerge
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    volumes:
+      - ${SERVICES_ROOT}/${PAPERMERGE_ROOT:-papermerge}:/config
+      - ${PAPERMERGE_DATA}:/data
+    ports:
+      - 8000:8000
+    restart: unless-stopped

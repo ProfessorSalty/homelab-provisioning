@@ -14,7 +14,7 @@ services:
       - "8989:8989"
     volumes:
       - ${SERVICES_ROOT}/${SONARR_ROOT:-sonarr}/config:/config
-      - ${TV_ROOT}:/tv
+      - ${SHOWS_ROOT}:/tv
       - ${DOWNLOADS_ROOT}:/downloads
     restart: unless-stopped
 
@@ -69,7 +69,7 @@ services:
     volumes:
       - ${SERVICES_ROOT}/${BAZARR_ROOT:-bazzar}/config:/config
       - ${MOVIES_ROOT}:/movies
-      - ${TV_ROOT}:/tv
+      - ${SHOWS_ROOT}:/tv
     restart: unless-stopped
 
   ###############################
@@ -160,49 +160,15 @@ services:
   #        LazyLibrian         #
   ##############################
   lazylibrarian:
-      image: linuxserver/lazylibrarian
-      container_name: lazylibrarian
-      environment:
-          - PUID=1000
-          - PGID=1000
-          - TZ
-          - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
-      volumes:
-          - ${SERVICES_ROOT}/${LAZYLIBRARIAN_ROOT:-lazylibrarian}/config:/config
-          - ${DOWNLOADS_ROOT}:/downloads
-          - ${BOOKS_ROOT}:/books
-      restart: unless-stopped
-
-  ##############################
-  #        Exportarr           #
-  ##############################
-  sonarr-exporter:
-      image: onedr0p/exportarr:master
-      container_name: sonarr-exporter
-      restart: unless-stopped
-      command: ["exportarr", "sonarr"]
-      networks:
-          - exporters
-      environment:
-          PORT: 9707
-          URL: "http://sonarr:8989"
-          APIKEY: ${SONARR_API_KEY}
-          ENABLE_EPISODE_QUALITY_METRICS: "false"
-          DISABLE_SSL_VERIFY: "true"
-      expose:
-          - 9707
-
-  radarr-exporter:
-      image: onedr0p/exportarr:master
-      container_name: radarr-exporter
-      restart: unless-stopped
-      command: ["exportarr", "radarr"]
-      networks:
-          - exporters
-      environment:
-          PORT: 9708
-          URL: "http://radarr:7878"
-          APIKEY: ${RADARR_API_KEY}
-          DISABLE_SSL_VERIFY: "true"
-      expose:
-          - 9708
+    image: linuxserver/lazylibrarian
+    container_name: lazylibrarian
+    environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ
+        - DOCKER_MODS=linuxserver/calibre-web:calibre #optional
+    volumes:
+        - ${SERVICES_ROOT}/${LAZYLIBRARIAN_ROOT:-lazylibrarian}/config:/config
+        - ${DOWNLOADS_ROOT}:/downloads
+        - ${BOOKS_ROOT}:/books
+    restart: unless-stopped

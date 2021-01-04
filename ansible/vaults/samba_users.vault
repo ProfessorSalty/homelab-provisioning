@@ -1,0 +1,11 @@
+credentials:
+  - name: downloads
+    password: pass@word1
+  - name: shows
+    password: pass@word1
+  - name: movies
+    password: pass@word1
+  - name: music
+    password: pass@word1
+  - name: books
+    password: pass@word1

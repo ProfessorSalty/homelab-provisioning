@@ -4,5 +4,6 @@
     "template_description": "Ready-to-run build of CentOS 8 with FreeIPA server. * Netdata * Mosh * Fish * Rsyslog pointing to central server",
     "template_username"   : "root",
     "proxmox_vm_id"       : "9002",
-    "boot_command"        : "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/centos/ks.cfg<enter><wait>"
+    "boot_command"        : "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>",
+    "http_dir"            : "centos"
 }

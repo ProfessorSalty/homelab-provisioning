@@ -1,0 +1,29 @@
+version: "3.7"
+services:
+  ###############################
+  #           Jellyfin          #
+  ###############################
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    restart: unless-stopped
+    volumes:
+      - ${MOVIES_ROOT}:/media/movies:ro
+      - ${TV_ROOT}:/media/tv:ro
+      - ${SERVICES_ROOT}/${JELLYFIN_ROOT:-jellyfin}/config:/config
+    environment:
+      - TZ
+  ###############################
+  #           Ampache           #
+  ###############################
+  ampache:
+    image: ampache/ampache:latest
+    container_name: ampache
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ${SERVICES_ROOT}/${AMPACHE_ROOT:-ampache}:/var/www/config
+      - ${MUSIC_ROOT}:/media
+      - ${AMPACHE_DB}:/var/lib/mysql
+      - ./sites-enabled:/etc/apache2/sites-enabled

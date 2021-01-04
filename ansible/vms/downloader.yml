@@ -1,9 +1,0 @@
-- name: Setup downloader
-  hosts: default
-  become: true
-  remote_user: toor
-
-  tasks:
-    - name: Execute docker-compose
-      community.general.docker_compose:
-        project_src: docker/downloader

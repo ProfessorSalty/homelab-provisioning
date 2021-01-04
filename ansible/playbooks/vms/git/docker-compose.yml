@@ -1,0 +1,19 @@
+version: "3.7"
+
+# https://gist.githubusercontent.com/ruanbekker/27d2cb2e3f4194ee5cfe2bcdc9c4bf52/raw/25590a23e87190a871d70fd57ab461ce303cd286/2020.02.04-gitea-drone_docker-compose.yml
+services:
+  web:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: unless-stopped
+    hostname: 'git.${ROOT_DOMAIN}'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://git.${ROOT_DOMAIN}'
+    ports:
+      - '80:80'
+      - '443:443'
+      - '22:22'
+    volumes:
+      - ${SERVICES_ROOT}/${GITLAB_ROOT:gitlab}:/etc/gitlab
+      - /srv/gitlab/logs:/var/log/gitlab
+      - ${GIT_ROOT}:/var/opt/gitlab

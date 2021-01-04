@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+    rutorrent:
+      image: romancin/rutorrent-flood:0.9.8
+      container_name: rutorrent-flood
+      tty: true
+      volumes:
+        - ${SERVICES_ROOT}/${RTOORENT_ROOT:-rtorrent}:/config
+        - ${TORRENTS_ROOT}:/downloads
+      environment:
+        - PUID
+        - PGID
+        - TZ
+        - CREATE_SUBDIR_BY_TRACKERS=NO
+        - SSL_ENABLED=NO
+        - RT_TOKEN=
+        - RT_MASTERS=
+      ports:
+        - "8880:80"
+        - "32316:52316"
+        - "3333:3000"
