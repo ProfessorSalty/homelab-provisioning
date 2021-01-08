@@ -17,6 +17,8 @@
         name: netdata
     - include_role:
         name: jnv.unattended-upgrades
+        apply:
+          become: true
       vars:
         unattended_automatic_reboot: yes
         unattended_origins_patterns:

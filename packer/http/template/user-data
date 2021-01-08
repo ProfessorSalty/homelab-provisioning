@@ -11,6 +11,8 @@ autoinstall:
         allow-pw: false
     packages:
         - qemu-guest-agent
+    package_update: true
+    package_upgrade: true
     identity:
         hostname: ubuntu.template
         username: toor

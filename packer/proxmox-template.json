@@ -26,7 +26,8 @@
             "boot_command"            : "{{ user `boot_command` }}",
             "scsi_controller"         : "virtio-scsi-single",
             "iso_file"                : "disk1:iso/{{ user `iso_file` }}",
-            "boot_wait"               : "5s",
+            "boot_wait"               : "6s",
+            "qemu_agent"              : true,
             "cores"                   : 1,
             "memory"                  : 2048,
             "http_directory"          : "packer/http/{{ user `http_dir` }}/",
@@ -58,12 +59,12 @@
         {
             "type"  : "shell",
             "inline": [
-                "while [ {{ user `cloud_init` }} && ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+                "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
             ]
         },
         {
             "type"            : "ansible",
-            "playbook_file"   : "ansible/templates/{{ user `template_name` }}.yml",
+            "playbook_file"   : "ansible/playbooks/{{ user `template_name` }}.yml",
             "galaxy_file"     : "ansible/requirements/{{ user `template_name` }}-requirements.yml",
             "roles_path"      : "ansible/roles",
             "collections_path": "ansible/collections",
