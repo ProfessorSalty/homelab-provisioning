@@ -7,8 +7,67 @@ services:
     restart: unless-stopped
     hostname: 'git.${ROOT_DOMAIN}'
     environment:
+      # https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-config-template/gitlab.rb.template
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'https://git.${ROOT_DOMAIN}'
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "smtp.${ROOT_DOMAIN}"
+        gitlab_rails['smtp_port'] = 465
+        gitlab_rails['smtp_user_name'] = "${SMTP_GIT_USER_NAME}"
+        gitlab_rails['smtp_password'] = "${SMTP_GIT_USER_PASS}"
+        gitlab_rails['smtp_domain'] = "${ROOT_DOMAIN}"
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_tls'] = false
+        gitlab_rails['gitlab_email_enabled'] = true
+        gitlab_rails['gitlab_default_theme'] = 2
+        gitlab_rails['gitlab_default_projects_features_issues'] = true
+        gitlab_rails['gitlab_default_projects_features_merge_requests'] = true
+        gitlab_rails['gitlab_default_projects_features_wiki'] = true
+        gitlab_rails['gitlab_default_projects_features_snippets'] = true
+        gitlab_rails['gitlab_default_projects_features_builds'] = true
+        gitlab_rails['gitlab_default_projects_features_container_registry'] = true
+        gitlab_rails['trusted_proxies'] = ['192.168.1.5']
+        gitlab_rails['monitoring_whitelist'] = ['127.0.0.0/8', '::1/128']
+        gitlab_rails['ldap_enabled'] = false
+        gitlab_rails['ldap_servers'] = YAML.load <<-'EOS'
+        main: # 'main' is the GitLab 'provider ID' of this LDAP server
+          label: 'LDAP'
+          host: '_your_ldap_server'
+          port: 389
+          uid: 'sAMAccountName'
+          bind_dn: '_the_full_dn_of_the_user_you_will_bind_with'
+          password: '_the_password_of_the_bind_user'
+          encryption: 'plain' # "start_tls" or "simple_tls" or "plain"
+          verify_certificates: true
+          smartcard_auth: false
+          active_directory: false
+          allow_username_or_email_login: false
+          lowercase_usernames: false
+          block_auto_created_users: false
+          base: ''
+          user_filter: ''
+        EOS
+        gitlab_rails['gitaly_token'] = 'secret token'
+        gitlab_rails['extra_matomo_url'] = '_your_matomo_url'
+        gitlab_rails['extra_matomo_site_id'] = '_your_matomo_site_id'
+        gitlab_rails['initial_root_password'] = "password"
+        gitlab_rails['initial_shared_runners_registration_token'] = "token"
+        gitlab_rails['db_adapter'] = "postgresql"
+        gitlab_rails['db_collation'] = nil
+        gitlab_rails['db_database'] = "gitlabhq_production"
+        gitlab_rails['db_username'] = "gitlab"
+        gitlab_rails['db_password'] = nil
+        gitlab_rails['db_host'] = nil
+        gitlab_rails['db_port'] = 5432
+        gitlab_rails['redis_host'] = "127.0.0.1"
+        gitlab_rails['redis_port'] = 6379
+        gitlab_rails['redis_ssl'] = false
+        gitlab_rails['redis_password'] = nil
+        gitlab_rails['redis_database'] = 0
+        gitlab_rails['redis_enable_client'] = true
+        gitlab_rails['registry_notification_secret'] = nil
+
     ports:
       - '80:80'
       - '443:443'

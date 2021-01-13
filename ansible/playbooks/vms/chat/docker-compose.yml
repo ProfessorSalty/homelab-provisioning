@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  synapse:
+    container_name: synapse
+    image: matrixdotorg/synapse:latest
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ
+      - SYNAPSE_SERVER_NAME=chat.${ROOT_DOMAIN}
+      - SYNAPSE_REPORT_STATS=no
+    ports:
+      - "8008:8008"
+    volumes:
+      - ${SERVICES_ROOT}/${SYNAPSE_ROOT:-synapse}/config:/data
+      - ${SHOWS_ROOT}:/tv
+      - ${DOWNLOADS_ROOT}:/downloads
+    restart: unless-stopped

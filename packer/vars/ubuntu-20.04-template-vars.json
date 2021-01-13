@@ -1,10 +1,12 @@
 {
-    "iso_file"            : "ubuntu-20.04-live-server-amd64.iso",
-    "template_name"       : "ubuntu-20.04-template",
-    "template_description": "Ready-to-run build of Ubuntu 20.04 (LTS) with * Netdata * Mosh * Fish * Rsyslog pointing to central server",
-    "template_username"   : "toor",
-    "proxmox_vm_id"       : "9001",
-    "cloud_init"          : "true",
-    "boot_command"        : "<esc><wait><esc><wait><f6><wait><esc><wait><bs><bs><bs><bs><bs> autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ --- <enter>,",
-    "http_dir"            : "template"
+        "iso_storage"         : "nas1-backups",
+        "iso_file"            : "ubuntu-20.04-live-server-amd64.iso",
+        "template_name"       : "ubuntu-20.04-template",
+        "template_description": "Ready-to-run build of Ubuntu 20.04 (LTS) with * Netdata * Mosh * Fish * Rsyslog pointing to central server",
+        "template_username"   : "toor",
+        "proxmox_vm_id"       : "9001",
+        "cloud_init"          : "true",
+        "boot_command"        : "<esc><wait><esc><wait><f6><wait><esc><wait><bs><bs><bs><bs><bs> autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ --- <enter>,",
+        "http_dir"            : "template",
+        "main_drive_size"     : "128G"
 }

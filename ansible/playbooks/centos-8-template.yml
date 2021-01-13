@@ -2,7 +2,7 @@
 - name: Setup Centos08
   hosts: default
   remote_user: root
-  vars_files: freeipa-vars.yml
+  vars_files: ../vars/freeipa-vars.yml
   collections:
     - freeipa.ansible_freeipa
     - professorsalty.homelab

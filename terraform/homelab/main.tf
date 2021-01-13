@@ -1,103 +1,119 @@
 locals {
   proxmox_primary         = "vm1"
   proxmox_secondary       = "vm2"
-  default_bridge          = "vmbr0"
-  streaming_bridge        = "vmbr1"
-  downloader_bridge       = "vmbr2"
-  torrent_bridge          = "vmbr3"
+  default_bridge          = "vmbr1"
+  streaming_bridge        = "vmbr2"
+  usenet_bridge           = "vmbr3"
+  torrent_bridge          = "vmbr4"
   ubuntu_docker_template  = "ubuntu-20.04-docker-template"
   centos_freeipa_template = "centos-8-template"
   os_type_ubuntu          = "ubuntu"
   os_type_centos          = "centos"
-  transcode_drive         = "transcode"
-  storage_drive           = "storage"
+  transcode_drive         = "transcodes"
+  storage_drive           = "bigdrive"
   download_drive          = "downloads"
   fast_drive              = "db"
   # This is necessary because the Telmate/proxmox plugin does not properly handle hard drives
   DUMMY_DRIVE = "DUMMY_DRIVE"
 }
 
-# module "freeipa-server" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
-#   name         = "freeipa"
-#   clone_source = local.centos_freeipa_template
-#   target_node  = local.proxmox_primary
-#   os_type      = local.os_type_centos
-#   vmid         = 400
-# }
+module "freeipa-server" {
+  pm_api_url   = var.pm_api_url
+  pm_user_pass = var.pm_user_pass
+  source       = "github.com/ProfessorSalty/terraform-homelab"
+  name         = "freeipa"
+  clone_source = local.centos_freeipa_template
+  target_node  = local.proxmox_primary
+  os_type      = local.os_type_centos
+  vmid         = 400
 
-# module "mediaserver" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
-#   target_node  = local.proxmox_primary
-#   clone_source = local.ubuntu_docker_template
-#   os_type      = local.os_type_ubuntu
-#   name         = "mediaserver"
-#   vmid         = 505
-#   cores        = 10
-#   memory       = 32768
+  disks = [{
+    size     = "128G"
+    storage  = local.DUMMY_DRIVE
+    iothread = true
+  }]
+}
 
-#   networks = [{
-#     bridge = local.streaming_bridge
-#   }]
+module "mediaserver" {
+  pm_api_url   = var.pm_api_url
+  pm_user_pass = var.pm_user_pass
+  source       = "github.com/ProfessorSalty/terraform-homelab"
+  target_node  = local.proxmox_primary
+  clone_source = local.ubuntu_docker_template
+  os_type      = local.os_type_ubuntu
+  name         = "mediaserver"
+  vmid         = 505
+  cores        = 10
+  memory       = 32768
 
-#   disks = [{
-#     size    = "64G"
-#     storage = local.DUMMY_DRIVE
-#     }, {
-#     size    = "450G"
-#     storage = local.transcode_drive
-#     ssd     = true
-#   }]
-# }
+  networks = [{
+    bridge = local.streaming_bridge
+  }]
 
-# // *arr, nzbget, calibre, calibre-web
+  disks = [{
+    size    = "128G"
+    storage = local.DUMMY_DRIVE
+    }, {
+    size    = "450G"
+    storage = local.transcode_drive
+    ssd     = 1
+  }]
+}
+
+# // *arr, nzbget, jackett
 module "downloader" {
-  source       = "https://github.com/ProfessorSalty/terraform-homelab"
+  pm_api_url   = var.pm_api_url
+  pm_user_pass = var.pm_user_pass
+  source       = "github.com/ProfessorSalty/terraform-homelab"
   name         = "downloader"
-  target_node  = var.proxmox_primary
+  target_node  = local.proxmox_primary
   vmid         = 506
   clone_source = local.ubuntu_docker_template
+  os_type      = local.os_type_ubuntu
   cores        = 2
   memory       = 16384
 
   networks = [{
     model  = "virtio"
-    bridge = local.downloader_bridge
+    bridge = local.usenet_bridge
   }]
 
   disks = [{
-    size    = "64G"
+    size    = "128G"
     storage = local.DUMMY_DRIVE
-    },
-    {
-      size    = "1500G"
-      storage = local.storage_drive
-    },
-    {
-      size    = "400G"
-      storage = local.download_drive
+    }, {
+    size    = "1500G"
+    storage = local.storage_drive
+    }, {
+    size    = "400G"
+    storage = local.download_drive
+    ssd     = 1
   }]
 }
 
 # module "torrent" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
-#   name         = "downloader"
-#   target_node  = var.proxmox_primary
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
+#   name         = "torrent"
+#   target_node  = local.proxmox_primary
 #   vmid         = 506
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 2
 #   memory       = 4096
 
 #   networks = [{
-#     bridge = var.torrent_bridge
+#     bridge = local.torrent_bridge
 #   }]
 # }
 
 # // nextcloud, papermerge, filestash
 # module "office" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
 #   name         = "office"
-#   target_node  = var.proxmox_secondary
+#   target_node  = local.proxmox_secondary
 #   vmid         = 508
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 2
@@ -105,8 +121,10 @@ module "downloader" {
 # }
 
 # module "bitwarden" {
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
 #   name         = "bitwarden"
-#   target_node  = var.proxmox_secondary
+#   target_node  = local.proxmox_secondary
 #   vmid         = 509
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 4
@@ -114,9 +132,11 @@ module "downloader" {
 # }
 
 # module "friendica" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
 #   name         = "friendica"
-#   target_node  = var.proxmox_secondary
+#   target_node  = local.proxmox_secondary
 #   vmid         = 510
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 4
@@ -124,9 +144,11 @@ module "downloader" {
 # }
 
 # module "mailserver" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
 #   name         = "mailserver"
-#   target_node  = var.proxmox_secondary
+#   target_node  = local.proxmox_secondary
 #   vmid         = 513
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 4
@@ -134,9 +156,11 @@ module "downloader" {
 # }
 
 # module "git" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
 #   name         = "git"
-#   target_node  = var.proxmox_primary
+#   target_node  = local.proxmox_primary
 #   vmid         = 516
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 4
@@ -155,9 +179,11 @@ module "downloader" {
 
 # // element, jitsi
 # module "chat" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
 #   name         = "chat"
-#   target_node  = var.proxmox_secondary
+#   target_node  = local.proxmox_secondary
 #   vmid         = 515
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 4
@@ -166,9 +192,11 @@ module "downloader" {
 
 # // home assistant, node RED, thingspeak
 # module "automation" {
-#   source       = "https://github.com/ProfessorSalty/terraform-homelab"
+# pm_api_url = var.pm_api_url
+# pm_user_pass = var.pm_user_pass
+#   source       = "github.com/ProfessorSalty/terraform-homelab"
 #   name         = "automation"
-#   target_node  = var.proxmox_secondary
+#   target_node  = local.proxmox_secondary
 #   vmid         = 514
 #   clone_source = local.ubuntu_docker_template
 #   cores        = 4
