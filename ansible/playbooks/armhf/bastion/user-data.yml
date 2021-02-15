@@ -1,0 +1,35 @@
+#cloud-config
+set_hostname: bastion
+users:
+  - name: toor
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    password: $6$csTyJPQAaXY6nRnj$nPVbjrl.bMdivp5GPbDwIuoPPvlsN/iZEEkp7L4qG6y936S6qLUBJ4TbYRx3F2RcG0MENsRJBOMtzalk0SKXI0
+    shell: /usr/bin/fish
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJnHe7M205S7FZbXhGB7uRz0eYEZNWZsD7k+PxJow1T9 MBP
+
+package_update: true
+package_upgrade: true
+packages:
+  - ansible
+  - mosh
+  - fish
+
+final_message: "The system finished at $TIMESTAMP, after $UPTIME seconds"
+ca-certs:
+  # If present and set to True, the 'remove-defaults' parameter will remove
+  # all the default trusted CA certificates that are normally shipped with
+  # Ubuntu.
+  # This is mainly for paranoid admins - most users will not need this
+  # functionality.
+  remove-defaults: true
+
+  # If present, the 'trusted' parameter should contain a certificate (or list
+  # of certificates) to add to the system as trusted CA certificates.
+  # Pay close attention to the YAML multiline list syntax.  The example shown
+  # here is for a list of multiline certificates.
+  trusted: 
+  - |
+   -----BEGIN CERTIFICATE-----
+   YOUR-ORGS-TRUSTED-CA-CERT-HERE
+   -----END CERTIFICATE-----

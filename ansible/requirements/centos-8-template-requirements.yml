@@ -1,10 +1,10 @@
 collections:
-    - ansible.posix
-    - ansible.netcommon
-    - freeipa.ansible_freeipa
-    - name: https://github.com/ProfessorSalty/professorsalt.homelab
-      type: git
+  - ansible.posix
+  - ansible.netcommon
+  - freeipa.ansible_freeipa
+  - name: https://github.com/ProfessorSalty/professorsalt.homelab
+    type: git
 
 roles:
-    - konstruktoid.hardening
-    - jnv.unattended-upgrades
+  - jnv.unattended-upgrades
+  - konstruktoid.hardening

@@ -9,10 +9,12 @@ locals {
   centos_freeipa_template = "centos-8-template"
   os_type_ubuntu          = "ubuntu"
   os_type_centos          = "centos"
+  os_type_cloudinit       = "cloud-init"
   transcode_drive         = "transcodes"
   storage_drive           = "bigdrive"
   download_drive          = "downloads"
   fast_drive              = "db"
+  vm_playbook_dir         = "../../../ansible/playbooks/vms"
   # This is necessary because the Telmate/proxmox plugin does not properly handle hard drives
   DUMMY_DRIVE = "DUMMY_DRIVE"
 }
@@ -45,6 +47,7 @@ module "mediaserver" {
   vmid         = 505
   cores        = 10
   memory       = 32768
+  vm_playbook_dir = local.vm_playbook_dir
 
   networks = [{
     bridge = local.streaming_bridge
@@ -72,6 +75,7 @@ module "downloader" {
   os_type      = local.os_type_ubuntu
   cores        = 2
   memory       = 16384
+  vm_playbook_dir = local.vm_playbook_dir
 
   networks = [{
     model  = "virtio"

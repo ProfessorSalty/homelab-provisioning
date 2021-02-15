@@ -6,20 +6,40 @@ services:
   ###############################
   node-red:
     image: nodered/node-red:latest
+    container_name: node-red
+    restart: unless_stopped
     environment:
       - TZ
     ports:
       - "1880:1880"
     volumes:
       - ${SERVICES_ROOT}/${NODE_RED_ROOT:-node-red}:/data
+
   ###############################
   #           Mosquitto         #
   ###############################
   mosquitto:
     image: eclipse-mosquitto
+    container_name: mosquitto
+    restart: unless_stopped
     environment:
       - TZ
     volumes:
       - ${SERVICES_ROOT}/${MOSQUITTO_ROOT:-mostquitto}:/mosquitto
     ports:
       - "1883:1883"
+
+  ###############################
+  #        HomeAssistant       #
+  ###############################
+  homeassistant:
+    image: homeassistant/home-assistant:latest
+    container_name: homeassistant
+    restart: unless_stopped
+    network_mode: host
+    volumes:
+      - ./configs/homeassistant:/config
+    environment:
+      - TZ
+    ports:
+      - "8123:8123"

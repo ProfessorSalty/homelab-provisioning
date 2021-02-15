@@ -6,5 +6,5 @@ collections:
     type: git
 
 roles:
-  - konstruktoid.hardening
   - jnv.unattended-upgrades
+  - konstruktoid.hardening

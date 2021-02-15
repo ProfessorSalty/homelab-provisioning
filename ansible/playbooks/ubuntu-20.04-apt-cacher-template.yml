@@ -8,5 +8,5 @@
   tasks:
     - name: Install apt-cacher
       apt:
-        name: apt-cacher
+        name: apt_cacher
         state: present

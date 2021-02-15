@@ -41,7 +41,8 @@
             "template_description"    : "{{ user `proxmox_template_description` }}",
             "template_name"           : "{{ user `template_name` }}",
             "unmount_iso"             : true,
-            "cloud_init"              : true,
+            "cloud_init"              : "{{ user `cloud_init` }}",
+            "cloud_init_storage_pool": "{{ user `storage_pool` }}",
             "network_adapters"        : [
                 {
                     "bridge": "{{ user `network_bridge` }}",

@@ -2,10 +2,12 @@
 
 - name: Provision Ubuntu Template with Docker
   hosts: default
-  remote_user: toor
   collections:
       - professorsalty.homelab
 
   tasks:
     - include_role: 
-        name: docker
+        name: install_docker
+      vars:
+        loki_server_address: logger.land:3100
+        template_username: toor

@@ -1,0 +1,43 @@
+- import_playbook: ../ubuntu-20.04-docker-template.yml
+
+- name: Setup logging and metrics server
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Set hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: logger
+
+    - name: Mount the drives
+      include_role:
+        name: create_filesystem
+      vars: 
+        drives:
+          - device: sdb
+            mount_point: transcode
+            
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Prometheus
+            port: 9090
+          - service: Grafana
+            port: 80
+          - service: Loki
+            port: 3100
+
+    - name: Run docker-compose file
+      environment: "{{ env_vars }}"
+      community.general.docker_compose:
+        project_src: "."
+        state: present

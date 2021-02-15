@@ -1,0 +1,66 @@
+all:
+  ipaserver:
+    freeipa.intothe.stream:
+        remote_user: root
+        ansible_host: freeipa.intothe.stream
+  children:
+    raspberrypis:
+      idm:
+        remote_user: root
+        ansible_host: idm.land
+      ca:
+        remote_user: ubuntu
+        ansible_host: ca.land
+      proxy:
+        remote_user: ubuntu
+        ansible_host: proxy.land
+      bastion:
+        remote_user: ubuntu
+        ansible_host: bastion.land
+      pihole:
+        remote_user: ubuntu
+        ansible_host: pihole.land
+    vms:
+      automation:
+        remote_user: toor
+        ansible_host: automation.land
+      bitwarden:
+        remote_user: toor
+        ansible_host: bitwarden.land
+      chat:
+        remote_user: toor
+        ansible_host: chat.land
+      cyberchef:
+        remote_user: toor
+        ansible_host: cyberchef.land
+      downloader:
+        remote_user: toor
+        ansible_host: downloader.land
+      email:
+        remote_user: toor
+        ansible_host: email.land
+      git:
+        remote_user: toor
+        ansible_host: git.land
+      mediaserver:
+        remote_user: toor
+        ansible_host: mediaserver.land
+      motioneye:
+        remote_user: toor
+        ansible_host: motioneye.land
+      office:
+        remote_user: toor
+        ansible_host: office.land
+      organizer:
+        remote_user: toor
+        ansible_host: organizer.land
+      social:
+        remote_user: toor
+        ansible_host: social.land
+      torrent:
+        remote_user: toor
+        ansible_host: torrent.land
+    servers:
+      logger:
+        remote_user: toor
+        ansible_host: logger.land

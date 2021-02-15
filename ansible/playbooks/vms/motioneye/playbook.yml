@@ -1,0 +1,42 @@
+- name: Setup MotionEye server
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Set hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: motioneye
+
+    - name: Mount the network shares
+      include_role:
+        name: mount_smb_shares
+      vars:
+        project_name: motioneye
+            
+        smb_credentials:
+          - username: mediauser
+            password:
+            sharepath: media
+
+    - name: Allow ports 
+      include_role:
+        name: ufw-allow-ports
+      vars:
+        configs:
+          - service: MotionEye
+            port: 8081
+          - service: MotionEye
+            port: 8765
+
+    - name: Run docker-compose file
+      environment: "{{ env_vars }}"
+      community.general.docker_compose:
+        project_src: "."
+        state: present

@@ -1,4 +1,9 @@
 version: "3.7"
+networks:
+  jupyterhub:
+  nextcloud:
+  proxy:
+
 services:
   ###############################
   #           Nextcloud         #
@@ -7,6 +12,10 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     container_name: nextcloud-server
+    networks:
+      - nextcloud
+    ports:
+      - "80:80"
     depends_on:
       - nextcloud-data
     volumes:
@@ -23,6 +32,8 @@ services:
     image: nextcloud:18-fpm-alpine
     restart: unless-stopped
     container_name: nextcloud
+    networks:
+      - nextcloud
     depends_on:
       - nextcloud-db
       - nextcloud-cache
@@ -53,6 +64,8 @@ services:
     image: postgres:12-alpine
     container_name: nextcloud-db
     restart: unless-stopped
+    networks:
+      - nextcloud
     environment:
       - POSTGRES_DB=nextcloud
       - POSTGRES_USER=nextcloud
@@ -65,6 +78,8 @@ services:
     image: redis:alpine
     container_name: nextcloud-cache
     restart: unless-stopped
+    networks:
+      - nextcloud
     environment:
       - TZ
 
@@ -74,8 +89,9 @@ services:
   filestash:
     container_name: filestash
     image: machines/filestash
-    restart: always
+    restart: unless-stopped
     environment:
+      - TZ
       - APPLICATION_URL=files.${ROOT_DOMAIN}
       - ONLYOFFICE_URL=http://onlyoffice
     ports:
@@ -84,7 +100,9 @@ services:
   onlyoffice:
     container_name: filestash_oods
     image: onlyoffice/documentserver
-    restart: always
+    restart: unless-stopped
+    environment:
+      - TZ
     
   ###############################
   #           Papermerge        #
@@ -100,5 +118,114 @@ services:
       - ${SERVICES_ROOT}/${PAPERMERGE_ROOT:-papermerge}:/config
       - ${PAPERMERGE_DATA}:/data
     ports:
-      - 8000:8000
+      - "8000:8000"
     restart: unless-stopped
+    
+  ###############################
+  #           CyberChef         #
+  ###############################
+  cyberchef:
+    image: mpepping/cyberchef
+    restart: unless-stopped
+    container_name: cyberchef
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    ports:
+      - "8001:8000"
+
+  ###############################
+  #     docker-socket-proxy     #
+  ###############################
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: dockerproxy
+    restart: unless-stopped
+    environment:
+      - AGENT_SECRET=${PORTAINER_HOST_SECRET}
+      - POST=1
+      - BUILD=1
+      - CONTAINERS=1
+      - EXEC=1
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - SESSION=1
+      - SWARM=1
+      - SYSTEM=1
+      - VOLUMES=1
+      - TZ
+    networks:
+      - proxy
+    expose:
+      - 2375
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  ###############################
+  #           Jupyter           #
+  ###############################
+  # pyspark:
+  #   image: "jupyter/all-spark-notebook"
+  #   environment:
+  #     - PUID
+  #     - PGID
+  #     - TZ
+  #   volumes:
+  #     - ${SERVICES_ROOT}/${JUPYTER_ROOT:-jupyter}:/home/jovyan
+  #   ports:
+  #     - "8888:8888"
+
+  hub-db:
+    image: postgres:9.5
+    container_name: jupyterhub-db
+    restart: unless-stopped
+    networks:
+      - jupyterhub
+    environment:
+      POSTGRES_DB: jupyterhub
+      PGDATA: /data
+    env_file:
+      - secrets/postgres.env
+    volumes:
+      - "${SERVICES_ROOT}/${JUPYTER_ROOT:-jupyter}/db:/data"
+
+  hub:
+    depends_on:
+      - hub-db
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyterhub
+      args:
+        JUPYTERHUB_VERSION: 0.9.2
+    restart: unless-stopped
+    command: 
+      - jupyterhub -f /srv/jupyterhub/jupyterhub_config.py
+      - -H tcp://dockerproxy:2375
+    image: jupyterhub
+    container_name: jupyterhub
+    networks:
+      - jupyterhub
+    volumes:
+      # Bind Docker volume on host for JupyterHub database and cookie secrets
+      - "data:/data"
+    ports:
+      - "80:80"
+    links:
+      - hub-db
+    environment:
+      # All containers will join this network
+      DOCKER_NETWORK_NAME: jupyterhub
+      # JupyterHub will spawn this Notebook image for users
+      DOCKER_NOTEBOOK_IMAGE: jupyter/minimal-notebook:8ccdfc1da8d5
+      # Notebook directory inside user image
+      DOCKER_NOTEBOOK_DIR: /home/jovyan/work
+      # Using this run command (optional)
+      DOCKER_SPAWN_CMD: start-singleuser.sh
+      # Postgres db info
+      POSTGRES_DB: jupyterhub
+      POSTGRES_HOST: hub-db
+    env_file:
+      - secrets/postgres.env
+      - secrets/ldap.env

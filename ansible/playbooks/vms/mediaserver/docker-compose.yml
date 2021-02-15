@@ -7,12 +7,14 @@ services:
     image: jellyfin/jellyfin
     container_name: jellyfin
     restart: unless-stopped
+    ports:
+      - "8096:8096"
     volumes:
-      - ${MOVIES_ROOT}:/media/movies:ro
-      - ${TV_ROOT}:/media/tv:ro
+      - ${MEDIA_ROOT}:/media:ro
       - ${SERVICES_ROOT}/${JELLYFIN_ROOT:-jellyfin}/config:/config
     environment:
       - TZ
+
   ###############################
   #           Ampache           #
   ###############################
@@ -21,9 +23,27 @@ services:
     container_name: ampache
     restart: unless-stopped
     ports:
-      - 80:80
+      - "80:80"
     volumes:
       - ${SERVICES_ROOT}/${AMPACHE_ROOT:-ampache}:/var/www/config
-      - ${MUSIC_ROOT}:/media
+      - ${MEDIA_ROOT}/music:/media
       - ${AMPACHE_DB}:/var/lib/mysql
       - ./sites-enabled:/etc/apache2/sites-enabled
+
+  ###############################
+  #           CalibreWeb        #
+  ###############################
+  calibre-web:
+    image: technosoft2000/calibre-web
+    container_name: calibre-web
+    restart: unless-stopped
+    environment:
+      - PUID
+      - PGID
+      - USE_CONFIG_DIR=true
+    ports:
+      - "8083:8083"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${BOOKS_ROOT}:/books
+      - ${SERVICES_ROOT}/${CALIBRE_WEB_ROOT:-calibre-web}:/calibre-web

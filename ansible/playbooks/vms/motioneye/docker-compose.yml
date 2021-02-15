@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+  ###############################
+  #         MotionEye           #
+  ###############################
+  motioneye:
+    container_name: motioneye
+    image: ccrisan/motioneye:master-amd64
+    ports:
+      - "8081:8081"
+      - "8765:8765"
+    environment:
+      - TZ
+    volumes:
+      - ${MOTIONEYE_CONFIG}/etc:/etc/motioneye
+      - ${MOTIONEYE_CONFIG}/var/lib:/var/lib/motioneye
+    restart: unless-stopped

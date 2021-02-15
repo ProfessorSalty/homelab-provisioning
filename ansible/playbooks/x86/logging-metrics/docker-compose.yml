@@ -1,0 +1,131 @@
+version: "3.7"
+services:
+  ###############################
+  #          Prometheus         #
+  ###############################
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+    volumes:
+      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  ###############################
+  #          Grafana            #
+  ###############################
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    user: "472:472"
+    links:
+      - grafana-db
+      - grafana-cache
+    environment:
+      - LDAP_LOGIN_BASE
+      - LDAP_ADMIN_PASSWORD
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/etc/secrets/grafana/admin
+      - GF_REMOTE_CACHE_TYPE=redis
+      - GF_REMOTE_CACHE_CONNSTR=addr=grafana-cache:6379,pool_size=100,db=0,ssl=false
+      - GF_AUTH_LDAP_ENABLED=true
+      - GF_AUTH_LDAP_ALLOW_SIGN_UP=true
+      - GF_AUTH_LDAP_CONFIG_FILE=/etc/grafana/ldap.toml
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp:587
+      - GF_SMTP_FROM_ADDRESS=notifications@${ROOT_DOMAIN}
+      - GF_SMTP_FROM_NAME=Grafana
+      - GF_SMTP_EHLO_INDENTITY=graphs.${ROOT_DOMAIN}
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=grafana-db:5432
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_PASSWORD__FILE=/etc/secrets/grafana/postgres_password
+      - GF_DATABASE_SSL_MODE=disable
+    volumes:
+      - ${SERVICES_ROOT}/${GRAFANA_ROOT:-grafana}:/var/lib/grafana
+      - ./configs/grafana/ldap.toml:/etc/grafana/ldap.toml
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning
+      - ./configs/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./configs/grafana/plugins:/var/lib/grafana/plugins
+      - ./configs/grafana/secrets:/etc/secrets/grafana:ro
+      - ./configs/openldap/secrets:/etc/secrets/openldap:ro
+
+  grafana-cache:
+    image: redis:alpine
+    container_name: grafana-cache
+    environment:
+      - TZ
+    expose:
+      - 6379
+    restart: unless-stopped
+
+  grafana-db:
+    image: postgres:12-alpine
+    container_name: grafana-db
+    restart: unless-stopped
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_DB=grafana
+      - POSTGRES_USER=grafana
+      - POSTGRES_PASSWORD_FILE=/etc/secrets/postgres_password
+      - TZ
+    volumes:
+      - ${SERVICES_ROOT}/${GRAFANA_ROOT:-grafana}/db:/var/lib/postgresql/data
+      - ./configs/grafana/secrets:/etc/secrets:ro
+
+  ###############################
+  #           Loki              #
+  ###############################
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  ###############################
+  #           Portainer         #
+  ###############################
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    command: -H tcp://dockerproxy:2375
+    restart: unless-stopped
+    environment:
+      - TZ
+    networks:
+      - proxy
+    volumes:
+      - ${SERVICES_ROOT}/${PORTAINER_ROOT:-portainer}:/data
+
+  ###############################
+  #     docker-socket-proxy     #
+  ###############################
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: dockerproxy
+    restart: unless-stopped
+    environment:
+      - AGENT_SECRET=${PORTAINER_HOST_SECRET}
+      - POST=1
+      - BUILD=1
+      - CONTAINERS=1
+      - EXEC=1
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - SESSION=1
+      - SWARM=1
+      - SYSTEM=1
+      - VOLUMES=1
+      - TZ
+    networks:
+      - proxy
+    expose:
+      - 2375
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"

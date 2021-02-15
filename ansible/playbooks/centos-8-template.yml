@@ -1,5 +1,5 @@
 ---
-- name: Setup Centos08
+- name: Setup Centos 8
   hosts: default
   remote_user: root
   vars_files: ../vars/freeipa-vars.yml
@@ -9,16 +9,16 @@
 
   pre_tasks:
     - include_role:
-        name: addkey
+        name: add_key
 
   tasks:
     - include_role:
-        name: centosrepos
+        name: add_epel_powertools
     - include_role: 
-        name: netdata
+        name: install_netdata
     - include_role: 
-        name: setup
+        name: install_server_packages
     - include_role: 
-        name: rsyslog
+        name: direct_rsyslog_to_server
     - include_role: 
         name: ipaserver

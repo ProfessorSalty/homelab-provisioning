@@ -1,6 +1,0 @@
-version: "3.7"
-services:
-  cyberchef:
-    image: mpepping/cyberchef
-    restart: unless-stopped
-    container_name: cyberchef

@@ -1,0 +1,51 @@
+- name: Setup mediaserver
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Set hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: mediaserver
+
+    - name: Mount the drives
+      include_role:
+        name: create_filesystem
+      vars: 
+        drives:
+          - device: sdb
+            mount_point: transcode
+            
+    - name: Mount samba shares
+      include_role:
+        name: mount_smb_shares
+      vars:
+        project_name: mediaserver
+        smb_credentials:
+          - username: mediauser
+            password:
+            sharepath: media
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Jellyfin
+            port: 8096
+          - service: Ampache
+            port: 80
+          - service: CalibreWeb
+            port: 8083
+
+    - name: Run docker-compose file
+      environment: "{{ env_vars }}"
+      community.general.docker_compose:
+        project_src: "."
+        state: present

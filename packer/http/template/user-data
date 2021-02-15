@@ -18,8 +18,3 @@ autoinstall:
         username: toor
         # openssl passwd -6 [-salt <salt>] <username>
         password: $6$csTyJPQAaXY6nRnj$nPVbjrl.bMdivp5GPbDwIuoPPvlsN/iZEEkp7L4qG6y936S6qLUBJ4TbYRx3F2RcG0MENsRJBOMtzalk0SKXI0
-    storage:
-        layout:
-            name: direct
-        swap:
-            size: 0

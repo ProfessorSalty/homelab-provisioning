@@ -1,20 +1,19 @@
 - name: Provision Ubuntu Template 
   hosts: default
-  remote_user: toor
   collections:
       - professorsalty.homelab
 
   pre_tasks:
     - include_role: 
-        name: addkey
+        name: add_key
 
   tasks:
     - include_role: 
-        name: setup
+        name: install_server_packages
     - include_role: 
-        name: rsyslog
+        name: direct_rsyslog_to_server
     - include_role: 
-        name: netdata
+        name: install_netdata
     - include_role:
         name: jnv.unattended-upgrades
         apply:
@@ -26,3 +25,16 @@
           - 'o=Ubuntu,a=${distro_codename}'
           - 'o=Ubuntu,a=${distro_codename}-updates'
           - 'o=Ubuntu,a=${distro_codename}-proposed-updates'
+    - include_role:
+        name: konstruktoid.hardening
+      vars:
+        system_upgrade: yes
+        packages_blocklist:
+          - telnet*
+          - tftp*
+        sshd_print_motd: no
+        sshd_use_dns: yes
+    - include_role:
+        name: prepare_cloudinit
+    - include_role:
+        name: remove_netplan

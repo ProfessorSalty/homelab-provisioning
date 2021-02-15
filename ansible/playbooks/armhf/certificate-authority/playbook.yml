@@ -1,0 +1,129 @@
+- import_playbook: ../../raspios-template.yml
+
+# https://smallstep.com/blog/build-a-tiny-ca-with-raspberry-pi-yubikey/
+- name: Provision Certificate Authority on Raspberry Pi
+  hosts: default
+  remote_user: ubuntu
+  collections:
+    - professorsalty.homelab
+    - community.general
+    - ansible.posix
+
+  tasks:
+    - name: Set the hostname
+      become: yes
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: ca
+        localdomain: land
+
+    - name: Set timezone
+      become: yes
+      timezone:
+        name: American/New_York
+
+    - name: Install dependencies
+      loop:
+        - libpcsclite-dev
+        - gcc
+        - make
+        - pkg-config
+        - yubikey-manager
+      package:
+        name: "{{ item }}"
+        state: present
+
+    - name: Install golang
+      become: yes
+      include_role:
+        name: install_golang
+
+    - name: Download step-ca source
+      get_url:
+        url: https://github.com/smallstep/certificates/archive/v0.15.5.tar.gz
+        dest: /home/ubuntu
+        mode: 777
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Unzip the archive
+      unarchive:
+        src: /home/ubuntu/v0.15.5.tar.gz 
+        remote_src: yes
+        dest: /home/ubuntu
+
+    - name: Bootstrap make
+      make:
+        chdir: /home/ubuntu/certificates-0.15.5/
+        target: bootstrap
+
+    - name: Build step-ca from source
+      make:
+        chdir: /home/ubuntu/certificates-0.15.5/
+        params:
+          # empty GOFLAGS enable experimental YubiKey support
+          GOFLAGS: ""
+
+    - name: Copy the step-ca binary
+      copy:
+        remote_src: yes
+        src: /home/ubuntu/certificates-0.15.5/bin/step-ca
+        dest: /usr/local/bin/
+
+    - name: Add capability to setp-ca binary
+      capabilities:
+        path: /usr/local/bin/step-ca
+        capability: cap_net_bind_service
+        state: present
+
+    - name: Download step binary
+      get_url:
+        url: https://github.com/smallstep/cli/releases/download/v0.15.3/step_linux_0.15.3_arm64.tar.gz
+        dest: /home/ubuntu
+        mode: 777
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Unzip the step binary
+      unarchive:
+        src: /home/ubuntu/step_linux_0.15.3_arm64.tar.gz
+        remote_src: yes
+        dest: /home/ubuntu
+
+    - name: Copy the step binary
+      copy:
+        remote_src: yes
+        src: /home/ubuntu/step_0.15.3/bin/step
+        dest: /usr/local/bin/
+
+    - name: Install VeraCrypt
+      include_role: 
+        name: install_veracrypt
+
+    - name: Set udev rules
+      copy:
+        dest: /etc/udev/rules.d/75-yubikey.rules
+        content: |
+          ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="1050/407/*", TAG+="systemd", SYMLINK+="yubikey"
+          ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="1050/407/*", TAG+="systemd"
+
+    - name: Create systemd entry
+      copy:
+        dest: /etc/systemd/system/step-ca.service
+        content: |
+          [Unit]
+          Description=step-ca
+          BindsTo=dev-yubikey.device
+          After=dev-yubikey.device
+
+          [Service]
+          User=step
+          Group=step
+          ExecStart=/bin/sh -c '/usr/local/bin/step-ca /etc/step-ca/config/ca.json'
+          Type=simple
+          Restart=on-failure
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target

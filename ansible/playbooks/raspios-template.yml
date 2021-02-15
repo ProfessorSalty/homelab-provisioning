@@ -1,22 +1,23 @@
 - name: Provision RaspiOS template
   hosts: default
-  remote_user: pi
   collections:
       - professorsalty.homelab
 
   pre_tasks:
     - include_role: 
-        name: addkey
+        name: add_key
 
   tasks:
     - include_role: 
-        name: setup
+        name: install_server_packages
     - include_role: 
-        name: rsyslog
+        name: direct_rsyslog_to_server
     - include_role: 
-        name: netdata
+        name: install_netdata
     - include_role:
-        name: rnngtools
+        name: install_rng_tools
+    - include_role:
+        name: setup_raspi_display
     - include_role:
         name: jnv.unattended-upgrades
       vars:

@@ -1,73 +1,38 @@
 version: "3.7"
 
 services:
-  mail:
-    image: tvial/docker-mailserver:latest
-    hostname: mail
+  mailserver:
+    image: docker.io/mailserver/docker-mailserver:latest
+    hostname: mail.${ROOT_DOMAIN}
     domainname: ${ROOT_DOMAIN}
     container_name: mail
-
     ports:
       - "25:25"
       - "143:143"
       - "587:587"
       - "993:993"
-
     volumes:
       - maildata:/var/mail
       - mailstate:/var/mail-state
-      - ${SERVICES_ROOT}/${DOCKER_MAILSERVER:-docker-mailserver}:/tmp/docker-mailserver/
-      - ${SSL_CERTS_PATH}:/tmp/ssl
-
+      - maillogs:/var/log/mail
+      - ./config/:/tmp/docker-mailserver/
+      - ./etc/dovecot/conf.d/10-plugin.conf:/etc/dovecot/conf.d/10-plugin.conf:ro
     environment:
-      # We are not using dovecot here
-      - SMTP_ONLY=1
       - ENABLE_SPAMASSASSIN=1
+      - SPAMASSASSIN_SPAM_TO_INBOX=1
       - ENABLE_CLAMAV=1
       - ENABLE_FAIL2BAN=1
       - ENABLE_POSTGREY=1
-      - SASLAUTHD_PASSWD=      
-
-      # >>> SASL Authentication
-      - ENABLE_SASLAUTHD=1
-      - SASLAUTHD_LDAP_SERVER=freeipa.${ROOT_DOMAIN}
-      - SASLAUTHD_LDAP_PROTO=
-      - SASLAUTHD_LDAP_BIND_DN=cn=Administrator,cn=Users,${LDAP_SEARCH_BASE}
-      - SASLAUTHD_LDAP_PASSWORD=${LDAP_ADMIN_PASSWORD}
-      - SASLAUTHD_LDAP_SEARCH_BASE=${LDAP_SEARCH_BASE}
-      - SASLAUTHD_LDAP_FILTER=(&(sAMAccountName=%U)(objectClass=person))
-      - SASLAUTHD_MECHANISMS=ldap
-      # <<< SASL Authentication
-
-      # >>> Postfix Ldap Integration
-      - ENABLE_LDAP=1
-      - LDAP_SERVER_HOST=freeipa.${ROOT_DOMAIN}
-      - LDAP_BIND_DN=cn=Administrator,cn=Users,${LDAP_SEARCH_BASE}
-      - LDAP_BIND_PW=${LDAP_ADMIN_PASSWORD}
-      - LDAP_QUERY_FILTER_USER=(&(objectClass=user)(mail=%s))
-      - LDAP_QUERY_FILTER_GROUP=(&(objectclass=group)(mail=%s))
-      - LDAP_QUERY_FILTER_ALIAS=(&(objectClass=user)(otherMailbox=%s))
-      - LDAP_QUERY_FILTER_DOMAIN=(&(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))(mailEnabled=TRUE))
-      # <<< Postfix Ldap Integration
-
-      # >>> Kopano Integration
-      - ENABLE_POSTFIX_VIRTUAL_TRANSPORT=1
-      - POSTFIX_DAGENT=lmtp:kopano:2003
-      # <<< Kopano Integration
-
+      - ENABLE_SASLAUTHD=0
       - ONE_DIR=1
       - DMS_DEBUG=0
-      - SSL_TYPE=manual
-      - SSL_CERT_PATH=/tmp/ssl/fullchain.pem
-      - SSL_KEY_PATH=/tmp/ssl/privkey.pem
-
-      - PERMIT_DOCKER=host
-
     cap_add:
       - NET_ADMIN
+      - SYS_PTRACE
+    restart: unless-stopped
 
-volumes:
-  maildata:
-    driver: local
-  mailstate:
-    driver: local
+  solr:
+    image: lmmdock/dovecot-solr:latest
+    volumes:
+     - solr-dovecot:/opt/solr/server/solr/dovecot
+    restart: unless-stopped
