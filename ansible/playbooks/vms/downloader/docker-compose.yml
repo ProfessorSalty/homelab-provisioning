@@ -7,7 +7,6 @@ services:
     image: tecnativa/docker-socket-proxy
     container_name: dockerproxy
     restart: unless-stopped
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - POST=1
       - BUILD=1
@@ -27,12 +26,11 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
 
   ###############################
-  #     docker-socket-proxy     #
+  #          watchtower         #
   ###############################
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
-    dns: ${DNS_HOST:-127.0.0.53}
     command: -H tcp://dockerproxy:2375 --interval 30
 
   ###############################
@@ -41,7 +39,6 @@ services:
   sonarr:
     image: ghcr.io/linuxserver/sonarr:preview
     container_name: sonarr
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -60,7 +57,6 @@ services:
   radarr:
     image: ghcr.io/linuxserver/radarr:latest
     container_name: radarr
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -79,7 +75,6 @@ services:
   lidarr:
     image: ghcr.io/linuxserver/lidarr
     container_name: lidarr
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -98,7 +93,6 @@ services:
   bazarr:
     image: ghcr.io/linuxserver/bazarr
     container_name: bazarr
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -117,7 +111,6 @@ services:
   mylar:
     image: ghcr.io/linuxserver/mylar3
     container_name: mylar
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -135,7 +128,6 @@ services:
   jackett:
     image: ghcr.io/linuxserver/jackett
     container_name: jackett
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -153,7 +145,6 @@ services:
   nzbhydra:
     image: ghcr.io/linuxserver/nzbhydra2
     container_name: nzbhydra
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -170,7 +161,6 @@ services:
   ombi:
     image: ghcr.io/linuxserver/ombi
     container_name: ombi
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID
@@ -187,7 +177,6 @@ services:
   lazylibrarian:
     image: ghcr.io/linuxserver/lazylibrarian
     container_name: lazylibrarian
-    dns: ${DNS_HOST:-127.0.0.53}
     ports:
       - 5299:5299
     environment:
@@ -208,7 +197,6 @@ services:
     image: hotio/readarr:nightly
     container_name: readarr  
     restart: unless-stopped  
-    dns: ${DNS_HOST:-127.0.0.53}
     ports:  
       - 8787:8787  
     volumes:  
@@ -226,7 +214,6 @@ services:
   nzbget:
     image: ghcr.io/linuxserver/nzbget
     container_name: nzbget
-    dns: ${DNS_HOST:-127.0.0.53}
     environment:
       - PUID
       - PGID

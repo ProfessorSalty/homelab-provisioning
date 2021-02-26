@@ -41,6 +41,8 @@
             port: 8096
           - service: Ampache
             port: 80
+          - service: Airsonic
+            port: 8080
           - service: CalibreWeb
             port: 8083
 

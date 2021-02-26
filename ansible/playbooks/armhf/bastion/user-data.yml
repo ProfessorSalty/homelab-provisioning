@@ -15,7 +15,7 @@ packages:
   - mosh
   - fish
 
-final_message: "The system finished at $TIMESTAMP, after $UPTIME seconds"
+final_message: "Finished bation server at $TIMESTAMP, after $UPTIME seconds"
 ca-certs:
   # If present and set to True, the 'remove-defaults' parameter will remove
   # all the default trusted CA certificates that are normally shipped with

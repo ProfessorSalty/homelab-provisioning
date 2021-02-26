@@ -1,3 +1,4 @@
+- import_playbook: ../../raspios-template.yml
 
 - name: Setup reverse proxy
   hosts: default

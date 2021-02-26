@@ -4,6 +4,11 @@ networks:
   nextcloud:
   proxy:
 
+volumes:
+  nginx_config:
+  staticfiles:
+  nextcloud:
+
 services:
   ###############################
   #           Nextcloud         #
@@ -164,6 +169,41 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
 
   ###############################
+  #           Tandoor           #
+  ###############################
+
+  tandoor-db:
+    container_name: tandoor-db
+    restart: always
+    image: postgres:11-alpine
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data
+
+  tandoor:
+    image: vabene1111/recipes
+    container_name: tandoor
+    restart: always
+    volumes:
+      - staticfiles:/opt/recipes/staticfiles
+      - nginx_config:/opt/recipes/nginx/conf.d
+      - ./mediafiles:/opt/recipes/mediafiles
+    depends_on:
+      - tandoor_db
+
+  tandoor-web:
+    image: nginx:mainline-alpine
+    container_name: tandoor-web
+    restart: always
+    ports:
+      - 9999:80
+    depends_on:
+      - tandoor_web
+    volumes:
+      - nginx_config:/etc/nginx/conf.d:ro
+      - staticfiles:/static
+      - ./mediafiles:/media
+
+  ###############################
   #           Jupyter           #
   ###############################
   # pyspark:
@@ -229,3 +269,57 @@ services:
     env_file:
       - secrets/postgres.env
       - secrets/ldap.env
+
+  ###############################
+  #      Barcode Buddy          #
+  ###############################
+  barcode-buddy:
+    image: f0rc3/barcodebuddy-docker:latest
+    container_name: barcode-buddy
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - bbconfig:/config
+
+  ###############################
+  #           Grocy             #
+  ###############################
+  grocy-web:
+    image: "grocy/nginx:${GROCY_IMAGE_TAG:-latest}"
+    build:
+      args:
+        GROCY_VERSION: v3.0.1
+        PLATFORM: linux/amd64
+      context: .
+      dockerfile: Dockerfile-grocy-nginx
+    depends_on:
+      - grocy
+    ports:
+      - '8080:8080'
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - /var/log/nginx
+    container_name: grocy-web
+
+  grocy:
+    image: "grocy/grocy:${GROCY_IMAGE_TAG:-latest}"
+    build:
+      args:
+        GROCY_VERSION: v3.0.1
+        PLATFORM: linux/amd64
+      context: .
+      dockerfile: Dockerfile-grocy
+    expose:
+      - '9000'
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - /var/log/php7
+      - app-db:/var/www/data
+    env_file:
+      - grocy.env
+    container_name: grocy

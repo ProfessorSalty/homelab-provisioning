@@ -1,0 +1,23 @@
+#cloud-config
+set_hostname: freeipa.intothe.stream
+users:
+  - name: toor
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    password: $6$1jkuzNbWd/t.ExN/$B5oD2fCJt93re2GpRb/JTJoWZVvEZp1OeEJRZKdQZtQfXzE./V9ErO/rkEpJFXs31RlL8EtKzc5k9Bd8.lnXI.
+    shell: /usr/bin/fish
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJnHe7M205S7FZbXhGB7uRz0eYEZNWZsD7k+PxJow1T9 MBP
+
+timezone: America/New_York
+disable_root: true
+ssh_pwauth: false
+package_update: true
+package_upgrade: true
+packages:
+  - mosh
+  - fish
+
+power_state:
+  mode: reboot
+
+final_message: "Finished IDM at $TIMESTAMP, after $UPTIME seconds"

@@ -11,3 +11,6 @@
       vars:
         loki_server_address: logger.land:3100
         template_username: toor
+
+    - include_role:
+        name: run_watchtower

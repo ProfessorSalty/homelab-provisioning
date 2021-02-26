@@ -86,3 +86,21 @@ services:
       - ./configs/traefik/static.yml:/traefik.yml
       - ./configs/traefik/dynamic.yml:/dynamic.yml
       - ${SERVICES_ROOT}/${TRAEFIK_ROOT:-traefik}/le:/le
+
+  ###############################
+  #           Gitea             #
+  ###############################
+  gitea:
+    image: gitea/gitea:1.13.2
+    container_name: gitea
+    environment:
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
+    restart: unless-stopped
+    volumes:
+      - ${MIRRORED_REPO_DRIVE}:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"

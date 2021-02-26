@@ -12,6 +12,6 @@ services:
     environment:
       - TZ
     volumes:
-      - ${MOTIONEYE_CONFIG}/etc:/etc/motioneye
-      - ${MOTIONEYE_CONFIG}/var/lib:/var/lib/motioneye
+      - ${SERVICES_ROOT}/${MOTIONEYE_ROOT:-motioneye}/etc:/etc/motioneye
+      - ${SERVICES_ROOT}/${MOTIONEYE_ROOT:-motioneye}/var/lib:/var/lib/motioneye
     restart: unless-stopped

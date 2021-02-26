@@ -14,6 +14,10 @@
       include_role: 
         name: install_docker
 
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower
+
     - name: Execute docker-compose
       environment: "{{ env_vars }}"
       community.general.docker_compose:

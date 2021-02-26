@@ -10,32 +10,13 @@
     - ansible.posix
 
   tasks:
-    - name: Set the hostname
+    - name: Create /etc/step-ca
       become: yes
-      include_role:
-        name: set_hostname
-      vars:
-        hostname: ca
-        localdomain: land
-
-    - name: Set timezone
-      become: yes
-      timezone:
-        name: American/New_York
-
-    - name: Install dependencies
-      loop:
-        - libpcsclite-dev
-        - gcc
-        - make
-        - pkg-config
-        - yubikey-manager
-      package:
-        name: "{{ item }}"
-        state: present
+      file:
+        path: /etc/step-ca
+        state: directory
 
     - name: Install golang
-      become: yes
       include_role:
         name: install_golang
 
@@ -62,10 +43,11 @@
       make:
         chdir: /home/ubuntu/certificates-0.15.5/
         params:
-          # empty GOFLAGS enable experimental YubiKey support
+          # empty GOFLAGS on build enable experimental YubiKey support in step-ca
           GOFLAGS: ""
 
     - name: Copy the step-ca binary
+      become: yes
       copy:
         remote_src: yes
         src: /home/ubuntu/certificates-0.15.5/bin/step-ca
@@ -101,7 +83,24 @@
       include_role: 
         name: install_veracrypt
 
+    - name: Amend /etc/crypttab to automount usb drive
+      become: yes
+      lineinfile:
+        path: /etc/crypttab
+        state: present
+        line: keys /dev/sda1 /etc/keyspassword tcrypt-veracrypt
+
+    - name: Mount the usb drive
+      become: yes
+      ansible.posix.mount:
+        state: mounted
+        path: /mnt/keys
+        src: /dev/mapper/keys
+        fstype: auto
+        opts: nosuid,nodev,nofail
+
     - name: Set udev rules
+      become: yes
       copy:
         dest: /etc/udev/rules.d/75-yubikey.rules
         content: |
@@ -127,3 +126,18 @@
 
           [Install]
           WantedBy=multi-user.target
+
+    - name: Setup the CA
+      become: yes
+      shell:
+        cmd: step ca init --name="Tiny CA"  --dns="tinyca.internal,10.20.30.42" --address=":443"  --provisioner="you@example.com"
+
+    - name: Add ACME provisioner to step-ca config
+      become: yes
+      shell:
+        cmd: step ca provisioner add acme --type acme --ca-config /etc/step-ca/config/ca.json
+
+
+    - name: Install Netbox
+      include_role:
+        - name: install_netbox

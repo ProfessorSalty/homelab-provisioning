@@ -13,6 +13,8 @@ services:
       - ${MEDIA_ROOT}:/media:ro
       - ${SERVICES_ROOT}/${JELLYFIN_ROOT:-jellyfin}/config:/config
     environment:
+      - PUID
+      - PGID
       - TZ
 
   ###############################
@@ -22,12 +24,36 @@ services:
     image: ampache/ampache:latest
     container_name: ampache
     restart: unless-stopped
+    environment:
+      - PUID
+      - PGID
+      - TZ
     ports:
       - "80:80"
     volumes:
       - ${SERVICES_ROOT}/${AMPACHE_ROOT:-ampache}:/var/www/config
       - ${MEDIA_ROOT}/music:/media
       - ${AMPACHE_DB}:/var/lib/mysql
+      - ./sites-enabled:/etc/apache2/sites-enabled
+
+  ###############################
+  #           Airsonic          #
+  ###############################
+  airsonic:
+    image: airsonicadvanced/airsonic-advanced:latest
+    container_name: airsonic
+    restart: unless-stopped
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${SERVICES_ROOT}/${AIRSONIC_ROOT:-airsonic}:/var/airsonic
+      - ${MEDIA_ROOT}/music:/var/music
+      - ${MEDIA_ROOT}/podcasts:/var/podcasts
+      - ${MEDIA_ROOT}/playlists:/var/playlists
       - ./sites-enabled:/etc/apache2/sites-enabled
 
   ###############################
@@ -41,6 +67,7 @@ services:
       - PUID
       - PGID
       - USE_CONFIG_DIR=true
+      - TZ
     ports:
       - "8083:8083"
     volumes:
