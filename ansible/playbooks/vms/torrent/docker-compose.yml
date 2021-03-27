@@ -1,39 +1,6 @@
 version: "3.7"
 services:
   ###############################
-  #     docker-socket-proxy     #
-  ###############################
-  dockerproxy:
-    image: tecnativa/docker-socket-proxy
-    container_name: dockerproxy
-    restart: unless-stopped
-    environment:
-      - POST=1
-      - BUILD=1
-      - CONTAINERS=1
-      - EXEC=1
-      - IMAGES=1
-      - INFO=1
-      - NETWORKS=1
-      - SESSION=1
-      - SWARM=1
-      - SYSTEM=1
-      - VOLUMES=1
-      - TZ
-    expose:
-      - 2375
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-
-  ###############################
-  #     docker-socket-proxy     #
-  ###############################
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    command: -H tcp://dockerproxy:2375 --interval 30
-
-  ###############################
   #           rtorrent          #
   ###############################
   rutorrent:
@@ -52,6 +19,6 @@ services:
       - RT_TOKEN=
       - RT_MASTERS=
     ports:
-      - "8880:80"
-      - "32316:52316"
-      - "3333:3000"
+      - "80:80"
+      - "52316:52316"
+      - "3000:3000"

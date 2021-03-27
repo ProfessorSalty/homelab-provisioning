@@ -1,0 +1,15 @@
+- import_playbook: ../../raspios-template.yml
+
+- name: Setup reverse proxy
+  hosts: default
+  remote_user: pi
+
+  tasks:
+    - role: caddy_ansible.caddy_ansible
+        caddy_environment_variables:
+          CLOUDFLARE_AUTH_TOKEN: "{{ cloudflare_auth_token }}"
+          ROOT_DOMAIN: "{{ ROOT_DOMAIN }}"
+        caddy_systemd_capabilities_enabled: true
+        caddy_systemd_network_dependency: false
+        caddy_packages: ["dns.providers.cloudflare"]
+        caddy_config: "{{ lookup('template', 'Caddyfile.j2') }}"

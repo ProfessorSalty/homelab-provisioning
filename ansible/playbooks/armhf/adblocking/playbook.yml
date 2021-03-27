@@ -1,18 +1,23 @@
 - import_playbook: ../../raspios-template.yml
 
-- name: Provision PiHole on Raspberry Pi
+- name: Provision AdGuard Home on Raspberry Pi
   hosts: default
   remote_user: root
   collections:
       - professorsalty.homelab
 
   tasks:
-    - name: Include common env vars
-      include_vars: ../../default_env_vars.yml
-
     - name: Install Docker
       include_role: 
         name: install_docker
+
+    - name: Remove resolved daemon
+      become: yes
+      systemd:
+        name: resolve
+        enalbed: no
+        state: stopped
+        masked: yes
 
     - name: Run watchtower with proxy
       include_role:

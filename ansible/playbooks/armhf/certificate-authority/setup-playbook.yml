@@ -10,6 +10,38 @@
     - ansible.posix
 
   tasks:
+    - name: Set the CA hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: tinyca
+        localdomain: land
+
+    - name: Install noise generator driver and tools
+      become: yes
+      with_itms:
+        - infnoise_0.3.1_armhf.deb
+        - infnoise-tools_0.3.1_armhf.deb
+      apt:
+        deb: "https://github.com/13-37-org/infnoise/releases/download/0.3.1/{{ item }}"
+        state: present
+
+    - name: Reboot the machine
+      become: yes
+      reboot:
+
+    - name: Install dependencies
+      become: yes
+      with_items:
+        - libpcsclite-dev
+        - gcc
+        - make
+        - pkg-config
+        - yubikey-manager
+      package:
+        name: "{{ item }}"
+        state: present
+
     - name: Create /etc/step-ca
       become: yes
       file:
@@ -30,8 +62,8 @@
 
     - name: Unzip the archive
       unarchive:
-        src: /home/ubuntu/v0.15.5.tar.gz 
         remote_src: yes
+        src: /home/ubuntu/v0.15.5.tar.gz 
         dest: /home/ubuntu
 
     - name: Bootstrap make
@@ -69,8 +101,8 @@
 
     - name: Unzip the step binary
       unarchive:
-        src: /home/ubuntu/step_linux_0.15.3_arm64.tar.gz
         remote_src: yes
+        src: /home/ubuntu/step_linux_0.15.3_arm64.tar.gz
         dest: /home/ubuntu
 
     - name: Copy the step binary
@@ -79,16 +111,12 @@
         src: /home/ubuntu/step_0.15.3/bin/step
         dest: /usr/local/bin/
 
-    - name: Install VeraCrypt
-      include_role: 
-        name: install_veracrypt
-
     - name: Amend /etc/crypttab to automount usb drive
       become: yes
       lineinfile:
         path: /etc/crypttab
         state: present
-        line: keys /dev/sda1 /etc/keyspassword tcrypt-veracrypt
+        line: keys /dev/sda1 /etc/keyspassword
 
     - name: Mount the usb drive
       become: yes
@@ -130,14 +158,28 @@
     - name: Setup the CA
       become: yes
       shell:
-        cmd: step ca init --name="Tiny CA"  --dns="tinyca.internal,10.20.30.42" --address=":443"  --provisioner="you@example.com"
+        cmd: step ca init --name "Tiny CA" \
+                --password-file <(echo "foo") \
+                --provisioner-password-file <(echo "foo") \
+                --root ./root_ca.crt
+                --ssh \ 
+                --with-ca-url "localhost" \
+                --address ":443" \
+                --dns "localhost" \
+                --provisioner "admin@intothe.stream" \
+                --key <(step crypto key format \
+                                --no-password --insecure --pem \
+                                --password-file <(echo "bar") ./root_ca_key) \
 
     - name: Add ACME provisioner to step-ca config
       become: yes
       shell:
         cmd: step ca provisioner add acme --type acme --ca-config /etc/step-ca/config/ca.json
 
-
     - name: Install Netbox
       include_role:
         - name: install_netbox
+
+    - name: reboot to finish
+      become: yes
+      reboot:

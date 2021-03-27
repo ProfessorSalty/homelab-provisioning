@@ -1,10 +1,9 @@
 #cloud-config
-set_hostname: tinyca
+set_hostname: proxy
 users:
   - name: tinyca
     sudo: ALL=(ALL) NOPASSWD:ALL
     password: $1$5ewW1Kuw$fxVrLoaT6HFrpT0JO8haL1
-    shell: /usr/bin/fish
     lock_passwd: false
     ssh_authorized_keys:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJnHe7M205S7FZbXhGB7uRz0eYEZNWZsD7k+PxJow1T9 MBP
@@ -14,11 +13,8 @@ disable_root: true
 ssh_pwauth: false
 package_update: true
 package_upgrade: true
-packages:
-  - mosh
-  - fish
 
 power_state:
   mode: reboot
 
-final_message: "Finished reverse-proxy-mirror at $TIMESTAMP, after $UPTIME seconds"
+final_message: "Finished reverse-proxy at $TIMESTAMP, after $UPTIME seconds"

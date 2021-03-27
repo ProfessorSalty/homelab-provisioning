@@ -1,13 +1,18 @@
 version: "3.7"
 services:
+  ###############################
+  #          Organizr           #
+  ###############################
   organizr:
     image: organizrtools/organizr-v2
     container_name: organizr
+    ports:
+      - "80:80"
     environment:
-        - PUID
-        - PGID
-        - TZ
+      - PUID
+      - PGID
+      - TZ
     volumes:
-        - ${SERVICES_ROOT}/${ORGANIZR_ROOT:-organizr}/config:/config
-        - ${SERVICES_ROOT}/${ORGANIZR_ROOT:-organizr}/db:/db
+      - ${SERVICES_ROOT}/${ORGANIZR_ROOT:-organizr}/config:/config
+      - ${SERVICES_ROOT}/${ORGANIZR_ROOT:-organizr}/db:/db
     restart: unless-stopped

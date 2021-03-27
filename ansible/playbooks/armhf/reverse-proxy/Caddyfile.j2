@@ -1,0 +1,45 @@
+tls {
+	dns cloudflare {env.CF_API_TOKEN}
+}
+
+(headers) {
+  header {
+    -Server
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Xss-Protection "1; mode=block"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "SAMEORIGIN"
+    Content-Security-Policy "upgrade-insecure-requests"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Cache-Control "public, max-age=15, must-revalidate"
+    Feature-Policy "accelerometer 'none'; ambient-light-sensor 'none'; autoplay 'self'; camera 'none'; encrypted-media 'none'; fullscreen 'self'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'none'; picture-in-picture *; speaker 'none'; usb 'none'; vr 'none'"
+  }
+}
+
+reverse_proxy cloud.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:80 {
+    import headers
+}
+
+reverse_proxy docs.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:8000 {
+    import headers
+}
+
+reverse_proxy chef.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:8001 {
+    import headers
+}
+
+reverse_proxy recipes.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:9999 {
+    import headers
+}
+
+reverse_proxy jupyterhub.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:8003 {
+    import headers
+}
+
+reverse_proxy barcodes.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:8086 {
+    import headers
+}
+
+reverse_proxy grocy.{env.ROOT_DOMAIN} office.{env.SEARCH_DOMAIN}:8080 {
+    import headers
+}

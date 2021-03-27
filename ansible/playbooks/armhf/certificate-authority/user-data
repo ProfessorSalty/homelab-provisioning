@@ -1,39 +1,10 @@
 #cloud-config
-hostname: tinyca
 password: R
 chpasswd: { expire: False }
 
 timezone: America/New_York
 disable_root: true
-ssh_pwauth: false
-package_update: true
-package_upgrade: true
-packages:
-  - mosh
-  - fish
-  - libpcsclite-dev
-  - gcc
-  - make
-  - pkg-config
-  - yubikey-manager
-  - qrencode
-  - avahi-daemon
 
 apt_proxy: http://192.168.1.1:3128
-ssh_authorized_keys:
-  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJnHe7M205S7FZbXhGB7uRz0eYEZNWZsD7k+PxJow1T9 MBP
-
-power_state:
-  mode: reboot
-  timeout: 5
-
-write_files:
-- content: |
-    #!/usr/bin/env sh
-    awk -F: '/\w+:\w+$/ { print $2 }' /var/log/cloud-init-output.log | qrencode -t UTF8
-  path: /opt/get_password.sh
-
-# escape the fucking regex
-cc_ready_cmd: ['sh', '/opt/get_passowrd.sh']
 
 final_message: "Finished TinyCA at $TIMESTAMP, after $UPTIME seconds"

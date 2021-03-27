@@ -8,4 +8,4 @@ env_vars:
   SERVICES_ROOT:
   ROOT_DOMAIN:
   LDAP_ADMIN_PASSWORD:
-  LDAP_SEARCH_BASE: "dc=intothe,dc=stream"
+  LDAP_SEARCH_BASE: 

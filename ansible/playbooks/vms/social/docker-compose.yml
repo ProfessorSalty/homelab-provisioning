@@ -1,8 +1,8 @@
 version: "3.7"
-###############################
-#           Friendica         #
-###############################
 services:
+  ###############################
+  #           Friendica         #
+  ###############################
   friendica-db:
     image: mariadb
     restart: always
@@ -30,6 +30,9 @@ services:
     depends_on:
       - db
 
+  ###############################
+  #           Mastodon          #
+  ###############################
   mastodon-db:
     restart: always
     image: postgres:9.6-alpine
@@ -82,7 +85,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     depends_on:
       - db
       - redis

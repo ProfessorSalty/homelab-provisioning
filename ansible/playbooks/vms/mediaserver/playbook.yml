@@ -51,3 +51,7 @@
       community.general.docker_compose:
         project_src: "."
         state: present
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

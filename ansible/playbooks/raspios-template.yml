@@ -8,6 +8,8 @@
         name: add_key
 
   tasks:
+    - name: Include common env vars
+        include_vars: ../../default_env_vars.yml
     - include_role: 
         name: install_server_packages
     - include_role: 

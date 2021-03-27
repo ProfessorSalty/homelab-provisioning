@@ -1,4 +1,4 @@
-- name: Setup social apps
+- name: Setup filebrowser
   hosts: default
   remote_user: toor
   collections:
@@ -8,18 +8,28 @@
     - name: Include common env vars
       include_vars: ../../default_env_vars.yml
 
-    - name: Include encrypted Samba credentials
-      include_vars: ../../../vaults/samba_users.vault
+    - name: Set hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: filebrowser
+
+    - name: Mount samba shares
+      include_role:
+        name: mount_smb_shares
+      vars:
+        smb_credentials:
+          - username: storageuser
+            password:
+            sharepath: storage
 
     - name: Allow ports 
       include_role:
         name: ufw_allow_ports
       vars:
         configs:
-          - service: Friendica
-            port: 80
-          - service: Mastodon
-            port: 3000
+          - service: filestash
+            port: 8334
 
     - name: Run docker-compose file
       environment: "{{ env_vars }}"

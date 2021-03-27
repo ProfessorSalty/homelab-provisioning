@@ -27,14 +27,18 @@
       vars:
         configs:
           - service: RUTorrent Flood
-            port: 8880
+            port: 80
           - service: RUTorrent Flood
-            port: 32316
+            port: 52316
           - service: RUTorrent Flood
-            port: 3333
+            port: 3000
 
     - name: Run docker-compose file
       environment: "{{ env_vars }}"
       community.general.docker_compose:
         project_src: "."
         state: present
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

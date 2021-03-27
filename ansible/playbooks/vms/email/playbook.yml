@@ -31,10 +31,20 @@
       vars:
         configs:
           - service: Email
-            port: 8081
+            port: 25
+          - service: Email
+            port: 143
+          - service: Email
+            port: 587
+          - service: Email
+            port: 993
 
     - name: Run docker-compose file
       environment: "{{ env_vars }}"
       community.general.docker_compose:
         project_src: "."
         state: present
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

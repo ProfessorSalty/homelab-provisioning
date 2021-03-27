@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  ###############################
+  #        AdGuard Home         #
+  ###############################
+  pihole:
+    container_name: adguard
+    image: adguard/adguardhome:latest
+    ports:
+      - "53:53"
+      - "67:67/udp"
+      - "68:68"
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "853:853/tcp"
+      - "3000:3000/tcp"
+    environment:
+      - TZ
+      - WEBPASSWORD=${ADGUARD_PASSWORD:?Please set a password for Adguard}
+    volumes:
+      - './adgard/work:/opt/adguardhome/work'
+      - './adgard/conf:/opt/adguardhome/conf'
+    restart: unless-stopped

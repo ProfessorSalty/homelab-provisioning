@@ -89,27 +89,6 @@ services:
       - TZ
 
   ###############################
-  #           Filestash         #
-  ###############################
-  filestash:
-    container_name: filestash
-    image: machines/filestash
-    restart: unless-stopped
-    environment:
-      - TZ
-      - APPLICATION_URL=files.${ROOT_DOMAIN}
-      - ONLYOFFICE_URL=http://onlyoffice
-    ports:
-      - "8334:8334"
-
-  onlyoffice:
-    container_name: filestash_oods
-    image: onlyoffice/documentserver
-    restart: unless-stopped
-    environment:
-      - TZ
-    
-  ###############################
   #           Papermerge        #
   ###############################
   papermerge:
@@ -251,7 +230,7 @@ services:
       # Bind Docker volume on host for JupyterHub database and cookie secrets
       - "data:/data"
     ports:
-      - "80:80"
+      - "8003:80"
     links:
       - hub-db
     environment:
@@ -286,7 +265,7 @@ services:
   #           Grocy             #
   ###############################
   grocy-web:
-    image: "grocy/nginx:${GROCY_IMAGE_TAG:-latest}"
+    image: grocy/nginx:latest
     build:
       args:
         GROCY_VERSION: v3.0.1
@@ -305,7 +284,7 @@ services:
     container_name: grocy-web
 
   grocy:
-    image: "grocy/grocy:${GROCY_IMAGE_TAG:-latest}"
+    image: grocy/grocy:latest
     build:
       args:
         GROCY_VERSION: v3.0.1

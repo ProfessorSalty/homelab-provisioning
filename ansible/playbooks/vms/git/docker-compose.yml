@@ -70,7 +70,6 @@ services:
 
     ports:
       - '80:80'
-      - '443:443'
       - '22:22'
     volumes:
       - ${SERVICES_ROOT}/${GITLAB_ROOT:gitlab}:/etc/gitlab

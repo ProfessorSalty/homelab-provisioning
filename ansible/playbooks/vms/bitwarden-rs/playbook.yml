@@ -1,4 +1,4 @@
-- name: Setup social apps
+- name: Setup Bitwarden
   hosts: default
   remote_user: toor
   collections:
@@ -8,24 +8,25 @@
     - name: Include common env vars
       include_vars: ../../default_env_vars.yml
 
-    - name: Include encrypted Samba credentials
-      include_vars: ../../../vaults/samba_users.vault
+    - name: Set the hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: bitwarden
+        localdomain: land
 
     - name: Allow ports 
       include_role:
         name: ufw_allow_ports
       vars:
         configs:
-          - service: Friendica
+          - service: Bitwarden
             port: 80
-          - service: Mastodon
-            port: 3000
 
-    - name: Run docker-compose file
+    - name: Execute docker-compose
       environment: "{{ env_vars }}"
       community.general.docker_compose:
-        project_src: "."
-        state: present
+        project_src: .
 
     - name: Run watchtower with proxy
       include_role:
