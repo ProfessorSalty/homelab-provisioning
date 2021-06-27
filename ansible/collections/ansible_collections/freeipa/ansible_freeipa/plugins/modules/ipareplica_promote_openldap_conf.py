@@ -1,1 +1,0 @@
-../../roles/ipareplica/library/ipareplica_promote_openldap_conf.py

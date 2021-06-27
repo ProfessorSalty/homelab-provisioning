@@ -1,1 +1,0 @@
-../../roles/ipaserver/library/ipaserver_setup_ntp.py

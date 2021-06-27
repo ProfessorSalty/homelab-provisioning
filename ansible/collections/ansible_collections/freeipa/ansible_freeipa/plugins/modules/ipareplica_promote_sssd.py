@@ -1,1 +1,0 @@
-../../roles/ipareplica/library/ipareplica_promote_sssd.py

@@ -1,1 +1,0 @@
-../../roles/ipaclient/library/ipaclient_test_keytab.py
