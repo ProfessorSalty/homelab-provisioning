@@ -1,0 +1,84 @@
+- name: Setup email server
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Set hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: email
+
+    - name: Mount the network shares
+      include_role:
+        name: mount_smb_shares
+      vars:
+        project_name: motioneye
+            
+        smb_credentials:
+          - username: mediauser
+            password:
+            sharepath: media
+
+    - name: Allow ports 
+      include_role:
+        name: ufw-allow-ports
+      vars:
+        configs:
+          - service: Email
+            port: 25
+          - service: Email
+            port: 143
+          - service: Email
+            port: 587
+          - service: Email
+            port: 993
+
+    - name: Start docker-mailserver
+      community.general.docker_container:
+        image: docker.io/mailserver/docker-mailserver:latest
+        hostname: mail.${ROOT_DOMAIN}
+        domainname: ${ROOT_DOMAIN}
+        name: mail
+        published_ports:
+          - "25:25"
+          - "143:143"
+          - "587:587"
+          - "993:993"
+        volumes:
+          - ./maildata:/var/mail
+          - ./mailstate:/var/mail-state
+          - ./maillogs:/var/log/mail
+          - ./config/:/tmp/docker-mailserver/
+          - ./etc/dovecot/conf.d/10-plugin.conf:/etc/dovecot/conf.d/10-plugin.conf:ro
+        env:
+          - ENABLE_SPAMASSASSIN=1
+          - SPAMASSASSIN_SPAM_TO_INBOX=1
+          - ENABLE_CLAMAV=1
+          - ENABLE_FAIL2BAN=1
+          - ENABLE_POSTGREY=1
+          - ENABLE_SASLAUTHD=0
+          - ONE_DIR=1
+          - DMS_DEBUG=0
+        capabilities:
+          - NET_ADMIN
+          - SYS_PTRACE
+        restart_policy: unless-stopped
+
+    - name: Start docker-mailserver
+      community.general.docker_container:
+      # Full text search
+        image: lmmdock/dovecot-solr:latest
+        name: dovecot-solr
+        volumes:
+          - ./solr-dovecot:/opt/solr/server/solr/dovecot
+        restart_policy: unless-stopped
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

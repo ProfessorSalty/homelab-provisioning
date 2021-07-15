@@ -1,0 +1,33 @@
+- name: Setup startpage
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: organizr
+            port: "{{organizr_port}}"
+
+    - name: Organizer
+      community.general.docker_container:
+        image: organizrtools/organizr-v2
+        name: organizr
+        published_ports:
+          - "{{organizr_port}}:80"
+        env:
+          PUID: "{{ lookup('env', 'UID') | default(1000, true) }}"
+          PGID: "{{ lookup('env', 'GID') | default(1000, true) }}"
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - "{{SERVICES_ROOT}}/organizr/config:/config"
+          - "{{SERVICES_ROOT}}/organizr/db:/db"
+        restart_policy: always
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

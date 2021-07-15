@@ -1,0 +1,47 @@
+- name: Setup Chat
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Include encrypted Samba credentials
+      include_vars: ../../../vaults/samba_users.vault
+      
+    - name: Set the hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: chat
+        localdomain: land
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Synapse
+            port: 8008
+
+    - name: Start Synapse container 
+      community.general.docker_container:
+        name: synapse
+        image: matrixdotorg/synapse:latest
+        env:
+          - PUID
+          - PGID
+          - TZ
+          - SYNAPSE_SERVER_NAME=chat.${ROOT_DOMAIN}
+          - SYNAPSE_REPORT_STATS=no
+        published_ports:
+          - "8008:8008"
+        volumes:
+          - ${SERVICES_ROOT}/${SYNAPSE_ROOT:-synapse}/config:/data
+        restart_policy: unless-stopped
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

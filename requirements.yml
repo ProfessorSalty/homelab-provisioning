@@ -1,0 +1,11 @@
+collections:
+  - ansible.posix
+  - ansible.netcommon
+  - freeipa.ansible_freeipa
+  - community.general.proxmox_kvm
+  - name: git+https://github.com/ProfessorSalty/professorsalty.homelab
+    type: git
+
+roles:
+  - jnv.unattended-upgrades
+  - konstruktoid.hardening

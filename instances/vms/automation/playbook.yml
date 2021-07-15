@@ -1,0 +1,66 @@
+- name: Setup automation
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Include encrypted Samba credentials
+      include_vars: ../../../vaults/samba_users.vault
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Node-Red
+            port: 1880
+          - service: Mosquitto
+            port: 1883
+          - service: HomeAssistant
+            port: 8123
+
+    - name: Run node-red
+      community.general.docker_container:
+        image: nodered/node-red:latest
+        name: node-red
+        state: started
+        restart_policy: unless_stopped
+        env:
+          - TZ
+        published_ports:
+          - "1880:1880"
+        volumes:
+          - ${SERVICES_ROOT}/${NODE_RED_ROOT:-node-red}:/data
+
+    - name: Run mosquitto
+      community.general.docker_container:
+        image: eclipse-mosquitto
+        name: mosquitto
+        restart_policy: unless_stopped
+        env:
+          - TZ
+        volumes:
+          - ${SERVICES_ROOT}/${MOSQUITTO_ROOT:-mostquitto}:/mosquitto
+        published_ports:
+          - "1883:1883"
+
+    - name: Run homeassistant
+      community.general.docker_container:
+        image: homeassistant/home-assistant:latest
+        name: homeassistant
+        restart_policy: unless_stopped
+        network_mode: host
+        volumes:
+          - ./configs/homeassistant:/config
+        env:
+          - TZ
+        published_ports:
+          - "8123:8123"
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

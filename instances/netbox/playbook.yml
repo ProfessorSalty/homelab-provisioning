@@ -1,0 +1,115 @@
+- name: Setup Netbox
+  hosts: default
+  remote_user: ubuntu
+  collections:
+    - professorsalty.homelab
+  vars_files:
+    - ./netbox-vars.yml
+
+  tasks:
+    - name: "TASK 10: SETUP SITES"
+        netbox.netbox.netbox_site:
+          netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+          netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+          data: "{{ item }}"
+        loop: "{{ site_list }}"
+
+    - name: "TASK 20: SETUP MANUFACTURERS"
+      netbox.netbox.netbox_manufacturer:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          name: "{{ manufacturer }}"
+      loop: "{{ manufacturers }}"
+      loop_control:
+        loop_var: manufacturer
+
+   - name: "TASK 30: SETUP DEVICE TYPES"
+      netbox.netbox.netbox_device_type:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          model: "{{ device_type.model }}"
+          manufacturer: "{{ device_type.manufacturer }}"
+          slug: "{{ device_type.slug }}"
+          part_number: "{{ device_type.part_number }}"
+          is_full_depth: "{{ device_type.full_depth }}"
+      loop: "{{ device_types }}"
+      loop_control:
+        loop_var: device_type
+        label: "{{ device_type['model'] }}"
+
+    - name: "TASK 40: SETUP PLATFORMS"
+      netbox.netbox.netbox_platform:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          name: "{{ platform.name }}"
+          slug: "{{ platform.slug }}"
+      loop: "{{ platforms }}"
+      loop_control:
+        loop_var: platform
+        label: "{{ platform['name'] }}"
+
+    - name: "TASK 100: NETBOX >> ADD DEVICE TO NETBOX"
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          name: "{{ inventory_hostname }}"
+          device_type: "{{ ansible_facts['net_model'] }}"
+          platform: IOS  # May be able to use a filter to define in future
+          serial: "{{ ansible_facts['net_serialnum'] }}"
+          status: Active
+          device_role: "{{ inventory_hostname | get_role_from_hostname }}"
+          site: “ANSIBLE_DEMO_SITE"
+          custom_fields:
+            code_version: "{{ ansible_facts['net_version'] }}"
+
+    - name: "TASK 110: NETBOX >> ADD INTERFACES TO NETBOX"
+      netbox.netbox.netbox_device_interface:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          device: "{{ inventory_hostname }}"
+          name: "{{ item.key }}"
+          form_factor: "{{ item.key | get_interface_type }}"  # Define types
+          mac_address: "{{ item.value.macaddress | ansible.netcommon.hwaddr }}"
+        state: present
+      with_dict:
+        - "{{ ansible_facts['net_interfaces'] }}"
+
+
+    - name: "TASK 200: NETBOX >> Add temporary interface"
+      netbox.netbox.netbox_device_interface:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          device: "{{ inventory_hostname }}"
+          name: Temporary_Interface
+          form_factor: Virtual
+        state: present
+
+    - name: "TASK 210: NETBOX >> ADD IP ADDRESS OF ANSIBLE HOST"
+      netbox.netbox.netbox_ip_address:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          family: 4
+          address: "{{ ansible_host }}/24"
+          status: active
+          interface:
+            name: Temporary_Interface
+            device: "{{ inventory_hostname }}"
+
+    - name: "TASK 220: NETBOX >> ASSOCIATE IP ADDRESS TO DEVICE"
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ lookup('ENV', 'NETBOX_URL') }}"
+        netbox_token: "{{ lookup('ENV', 'NETBOX_API_KEY') }}"
+        data:
+          name: "{{ inventory_hostname }}"
+          device_type: "{{ ansible_facts['net_model'] }}"
+          platform: IOS
+          serial: "{{ ansible_facts['net_serialnum'] }}"
+          status: Active
+          primary_ip4: "{{ ansible_host }}/24"

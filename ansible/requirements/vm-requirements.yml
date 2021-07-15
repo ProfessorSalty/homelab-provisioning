@@ -1,5 +1,0 @@
-collections:
-  - ansible.posix
-  - community.general
-  - name: https://github.com/ProfessorSalty/professorsalt.homelab
-    type: git

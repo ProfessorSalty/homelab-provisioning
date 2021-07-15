@@ -1,0 +1,7 @@
+---
+default_envs: &default_envs
+  PUID: "{{ lookup('env', 'UID') | default(1000, true) }}"
+  PGID: "{{ lookup('env', 'GID') | default(1000, true) }}"
+
+default_volume_mounts: &default_volume_mounts
+  - "/etc/localtime:/etc/localtime:ro"

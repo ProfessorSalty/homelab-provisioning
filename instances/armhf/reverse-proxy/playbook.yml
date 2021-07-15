@@ -1,0 +1,29 @@
+- import_playbook: ../../raspios-template.yml
+
+- name: Provision reverse proxy on Raspberry Pi
+  hosts: default
+  remote_user: root
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Install Docker
+      include_role: 
+        name: install_docker
+
+    - name: Remove resolved daemon
+      become: yes
+      systemd:
+        name: resolve
+        enalbed: no
+        state: stopped
+        masked: yes
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower
+
+    - name: Execute docker-compose
+      environment: "{{ env_vars }}"
+      community.general.docker_compose:
+        project_src: .

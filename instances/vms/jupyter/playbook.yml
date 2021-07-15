@@ -1,0 +1,21 @@
+- name: Setup Jupyter
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Grocy
+            port: "{{ grocy_port }}"
+    
+    - name: 
+      community.general.docker_container:
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

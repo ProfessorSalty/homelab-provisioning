@@ -1,0 +1,165 @@
+- name: Setup social apps
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Include encrypted Samba credentials
+      include_vars: ../../../vaults/samba_users.vault
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Friendica
+            port: 80
+          - service: Mastodon
+            port: 3000
+
+    # TODO create networks and volumes
+
+    - name: Friendica database
+      community.general.docker_container:
+        image: mariadb
+        restart_policy: always
+        volumes:
+          - friendica-db:/var/lib/mysql
+        env:
+          - MYSQL_USER=friendica
+          - MYSQL_PASSWORD=${FRIENDICA_DB_PASSWORD}
+          - MYSQL_DATABASE=friendica
+          - MYSQL_RANDOM_ROOT_PASSWORD=yes
+
+    - name: Friendica 
+      community.general.docker_container:
+        image: friendica
+        restart_policy: always
+        volumes:
+          - friendica:/var/www/html
+        published_ports:
+          - "80:80"
+        env:
+          - MYSQL_HOST=db
+          - MYSQL_USER=friendica
+          - MYSQL_PASSWORD=${FRIENDICA_DB_PASSWORD}
+          - MYSQL_DATABASE=friendica
+          - FRIENDICA_ADMIN_MAIL=admin@${ROOT_DOMAIN}
+
+    - name: Mastodon database
+      community.general.docker_container:
+        image: postgres:9.6-alpine
+        restart_policy: always
+        shm_size: 256mb
+        networks:
+          - internal_network
+        healthcheck:
+          test: ["CMD", "pg_isready", "-U", "postgres"]
+        volumes:
+          - ./postgres:/var/lib/postgresql/data
+
+    - name: Mastodon cache
+      community.general.docker_container:
+        image: redis:6.0-alpine
+        restart_policy: always
+        networks:
+          - internal_network
+        healthcheck:
+          test: ["CMD", "redis-cli", "ping"]
+        volumes:
+          - ./redis:/data
+
+    - name: Mastodon search
+      community.general.docker_container:
+        restart_policy: always
+        image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
+        env:
+          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+          - "cluster.name=es-mastodon"
+          - "discovery.type=single-node"
+          - "bootstrap.memory_lock=true"
+        networks:
+          - internal_network
+        healthcheck:
+          test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+        volumes:
+          - ./elasticsearch:/usr/share/elasticsearch/data
+        ulimits:
+          memlock:
+            soft: -1
+            hard: -1
+
+    - name: Mastodon 
+      community.general.docker_container:
+        build: .
+        image: tootsuite/mastodon
+        restart: always
+        env_file: .env.production
+        command: bash -c "rm -f /mastodon/tmp/pids/server.pid; bundle exec rails s -p 3000"
+        networks:
+          - external_network
+          - internal_network
+        healthcheck:
+          test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:3000/health || exit 1"]
+        published_ports:
+          - "3000:3000"
+        volumes:
+          - ./public/system:/mastodon/public/system
+
+    - name: Mastodon 
+      community.general.docker_container:
+        build: .
+        image: tootsuite/mastodon
+        restart_policy: always
+        env_file: .env.production
+        command: node ./streaming
+        networks:
+          - external_network
+          - internal_network
+        healthcheck:
+          test: ["CMD-SHELL", "wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1"]
+        published_ports:
+          - "127.0.0.1:4000:4000"
+
+    - name: Sidekiq
+      community.general.docker_container:
+        build: .
+        image: tootsuite/mastodon
+        restart_policy: always
+        env_file: .env.production
+        command: bundle exec sidekiq
+        depends_on:
+          - db
+          - redis
+        networks:
+          - external_network
+          - internal_network
+        volumes:
+          - ./public/system:/mastodon/public/system
+
+    - name: Mastodon Federation
+      community.general.docker_container:
+      # Uncomment to enable federation with tor instances along with adding the following ENV variables
+      # http_proxy=http://privoxy:8118
+      # ALLOW_ACCESS_TO_HIDDEN_SERVICE=true
+        image: sirboops/tor
+        networks:
+          - external_network
+          - internal_network
+
+    - name: Privoxy
+      community.general.docker_container:
+        image: sirboops/privoxy
+        volumes:
+          - ./priv-config:/opt/config
+        networks:
+          - external_network
+          - internal_network
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

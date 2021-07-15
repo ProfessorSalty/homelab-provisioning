@@ -1,7 +1,0 @@
-collections:
-  - ansible.posix
-  - name: https://github.com/ProfessorSalty/professorsalt.homelab
-    type: git
-
-roles:
-  - jnv.unattended-upgrades

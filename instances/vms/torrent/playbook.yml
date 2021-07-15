@@ -1,0 +1,60 @@
+- name: Setup torrent
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Include encrypted Samba credentials
+      include_vars: ../../../vaults/samba_users.vault
+
+    - name: Mount samba shares
+      include_role:
+        name: mount_smb_shares
+      vars:
+        project_name: torrent
+        smb_credentials:
+          - username: torrentsuser
+            password:
+            sharepath: torrents
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: RUTorrent Flood
+            port: 80
+          - service: RUTorrent Flood
+            port: 52316
+          - service: RUTorrent Flood
+            port: 3000
+
+    - name: rutorrent-flood
+      community.general.docker_compose:
+        image: romancin/rutorrent-flood:latest
+        name: rutorrent-flood
+        # TODO valid?
+        tty: true
+        volumes:
+          - ${SERVICES_ROOT}/${RTOORENT_ROOT:-rtorrent}:/config
+          - ${TORRENTS_ROOT}:/downloads
+        environment:
+          - PUID
+          - PGID
+          - TZ
+          - CREATE_SUBDIR_BY_TRACKERS=NO
+          - SSL_ENABLED=NO
+          - RT_TOKEN=
+          - RT_MASTERS=
+        published_ports:
+          - "80:80"
+          - "52316:52316"
+          - "3000:3000"
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

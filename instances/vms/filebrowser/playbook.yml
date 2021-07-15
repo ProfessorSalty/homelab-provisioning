@@ -1,0 +1,53 @@
+- name: Setup filebrowser
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Set hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: filebrowser
+
+    - name: Mount samba shares
+      include_role:
+        name: mount_smb_shares
+      vars:
+        smb_credentials:
+          - username: storageuser
+            password:
+            sharepath: storage
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: filestash
+            port: 8334
+
+    - name: Start Filestash
+      community.general.docker_container:
+        name: filestash
+        image: machines/filestash
+        restart_policy: unless-stopped
+        env:
+          - TZ
+          - APPLICATION_URL=files.${SEARCH_DOMAIN}
+          - ONLYOFFICE_URL=http://onlyoffice
+        published_ports:
+          - "8334:8334"
+
+    - name: Start OnlyOffice
+      community.general.docker_container:
+        name: filestash_oods
+        image: onlyoffice/documentserver
+        restart_policy: unless-stopped
+        env:
+          - TZ
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

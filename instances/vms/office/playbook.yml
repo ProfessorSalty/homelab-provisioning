@@ -1,0 +1,195 @@
+- name: Setup office
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Nextcloud
+            port: "{{ nextcloud_port }}"
+          - service: Filestash
+            port: "{{ filestash_port }}"
+          - service: Papermerge
+            port: "{{ papermerge_port }}"
+          - service: CyberChef
+            port: "{{ cyberchef_port }}"
+    
+    - name: Nextcloud (nginx)
+      community.general.docker_container:
+        image: nginx:alpine
+        restart: unless-stopped
+        container_name: nextcloud-server
+        networks:
+          - nextcloud
+        ports:
+          - "{{ nextcloud_port }}:80"
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+          - nextcloud:/var/www/html:ro
+          - "{{ NEXTCLOUD_DATA }}:/var/www/html/data"
+          - "{{ SERVICES_ROOT }}/nextcloud/config:/var/www/html/config"
+          - "{{ SERVICES_ROOT }}/nextcloud/custom_apps:/var/www/html/custom_apps"
+          - "{{ SERVICES_ROOT }}/nextcloud/themes:/var/www/html/themes"
+
+    - name: Nextcloud (FPM)
+      community.general.docker_container:
+        image: nextcloud:18-fpm-alpine
+        restart: unless-stopped
+        container_name: nextcloud
+        networks:
+          - nextcloud
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - nextcloud:/var/www/html
+          - "{{ NEXTCLOUD_DATA }}:/var/www/html/data"
+          - "{{ SERVICES_ROOT }}/nextcloud/config:/var/www/html/config"
+          - "{{ SERVICES_ROOT }}/nextcloud/custom_apps:/var/www/html/custom_apps"
+          - "{{ SERVICES_ROOT }}/nextcloud/themes:/var/www/html/themes"
+        environment:
+          - NEXTCLOUD_ADMIN_USER
+          - NEXTCLOUD_ADMIN_PASSWORD
+          - POSTGRES_USER: nextcloud
+          - POSTGRES_PASSWORD: {{ NEXTCLOUD_DB_PASSWORD }}
+          - POSTGRES_HOST: nextcloud-db
+          - POSTGRES_DB: nextcloud
+          - NEXTCLOUD_HOSTNAME: cloud.{{ ROOT_DOMAIN }}
+          - NEXTCLOUD_TRUSTED_DOMAINS: cloud.{{ ROOT_DOMAIN }} {{ ROOT_DOMAIN }} localhost
+          - OVERWRITEPROTOCOL: https
+          - REDIS_HOST: nextcloud-cache
+          - SMTP_HOST: smtp
+          - SMTP_AUTH_TYPE: NONE
+          - SMTP_PORT: 587
+          - MAIL_FROM_ADDRESS: notifications@{{ ROOT_DOMAIN }}
+
+    - name: Nextcloud (DB)
+      community.general.docker_container:
+        image: postgres:12-alpine
+        container_name: nextcloud-db
+        restart: unless-stopped
+        networks:
+          - nextcloud
+        environment:
+          - POSTGRES_DB=nextcloud
+          - POSTGRES_USER=nextcloud
+          - POSTGRES_PASSWORD={{ NEXTCLOUD_DB_PASSWORD }}
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - "{{ SERVICES_ROOT }}/nextcloud/db:/var/lib/postgresql/data"
+
+    - name: Nextcloud (Cache)
+      community.general.docker_container:
+        image: redis:alpine
+        container_name: nextcloud-cache
+        restart: unless-stopped
+        networks:
+          - nextcloud
+
+    - name: Papermerge
+      community.general.docker_container:
+        image: ghcr.io/linuxserver/papermerge
+        container_name: papermerge
+        environment:
+          - PUID
+          - PGID
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - "{{ SERVICES_ROOT }}/papermerge:/config"
+          - "{{ PAPERMERGE_DATA }}:/data"
+        ports:
+          - "{{ papermerge_port }}:8000"
+        restart: unless-stopped
+        
+    - name: Cyberchef
+      community.general.docker_container:
+        image: mpepping/cyberchef
+        restart: unless-stopped
+        container_name: cyberchef
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+        environment:
+          - PUID
+          - PGID
+        ports:
+          - "{{ cyberchef_port }}:8000"
+
+    - name: Filestash
+      community.general.docker_container:
+        container_name: filestash
+        image: machines/filestash
+        restart: always
+        environment:
+          - APPLICATION_URL=
+          - ONLYOFFICE_URL=http://onlyoffice
+        ports:
+        - "{{ filestash_port }}:8334"
+    
+        # Put on separate network
+    - name: OpenOffice Document Server
+      community.general.docker_container:
+        container_name: oods
+        image: onlyoffice/documentserver
+        restart: always
+
+    - name: Papermerge (DB)
+      community.general.docker_container:
+        image: postgres:12.3
+        container_name: postgres_db
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - postgres_data:/var/lib/postgresql/data/
+        environment:
+          - POSTGRES_USER=dbuser
+          - POSTGRES_PASSWORD=dbpass
+          - POSTGRES_DB=dbname
+
+    - name: Papermerge (Cache)
+      community.general.docker_container:
+        image: 'redis:6'
+        container_name: 'redis'
+        ports:
+          - '127.0.0.1:6379:6379'
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - 'redisdata:/data'
+
+    - name: Papermerge (App)
+      community.general.docker_container:
+        image: eugenci/papermerge:2.0.0
+        container_name: papermerge_app
+        published_ports:
+          - "{{ papermege_port }}:8000"
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - media_root:/opt/media
+        environment:
+          - DJANGO_SETTINGS_MODULE=config.settings.production
+          - POSTGRES_USER=dbuser
+          - POSTGRES_PASSWORD=dbpass
+          - POSTGRES_DB=dbname
+          - POSTGRES_HOST=db
+          - POSTGRES_PORT=5432
+
+    - name: Papermerge (Worker)
+      community.general.docker_container:
+        image: eugenci/papermerge-worker:v2.0.0
+        container_name: papermerge_worker
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - media_root:/opt/media
+        environment:
+          - DJANGO_SETTINGS_MODULE=config.settings.production
+          - POSTGRES_USER=dbuser
+          - POSTGRES_PASSWORD=dbpass
+          - POSTGRES_DB=dbname
+          - POSTGRES_HOST=db
+          - POSTGRES_PORT=5432 
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

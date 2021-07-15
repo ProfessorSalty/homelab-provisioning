@@ -1,0 +1,107 @@
+- name: Setup Kitchen
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Grocy
+            port: "{{ grocy_port }}"
+          - service: Barcode Buddy 
+            port: "{{ barcode_buddy_port }}"
+          - service: Tandoor
+            port: "{{ tandoor_port }}"
+    
+    - name: nginx (Grocy)
+      community.general.docker_container:
+        image: grocy/nginx:latest
+        build:
+          args:
+            GROCY_VERSION: v3.0.1
+            PLATFORM: linux/amd64
+          context: .
+          dockerfile: Dockerfile-grocy-nginx
+        published_ports:
+          - '{{ grocy_port }}:8080'
+        read_only: true
+        tmpfs:
+          - /tmp
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - /var/log/nginx
+        name: grocy-web
+
+    - name: Grocy (App)
+      community.general.docker_container:
+        image: grocy/grocy:latest
+        build:
+          args:
+            GROCY_VERSION: v3.0.1
+            PLATFORM: linux/amd64
+          context: .
+          dockerfile: Dockerfile-grocy
+        expose:
+          - '9000'
+        read_only: true
+        tmpfs:
+          - /tmp
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - /var/log/php7
+          - app-db:/var/www/data
+        env_file:
+          - grocy.env
+        container_name: grocy
+
+    - name: Barcode Buddy
+      community.general.docker_container:
+        image: f0rc3/barcodebuddy-docker:latest
+        container_name: barcode-buddy
+        restart: unless-stopped
+        ports:
+          - "{{ barcode_buddy_port }}:8086"
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - bbconfig:/config
+
+    - name: Tandoor (DB)
+      community.general.docker_container:
+        container_name: tandoor-db
+        restart: always
+        image: postgres:11-alpine
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - ./postgresql:/var/lib/postgresql/data
+
+    - name: Tandoor (app)
+      community.general.docker_container:
+        image: vabene1111/recipes
+        container_name: tandoor
+        restart: always
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - staticfiles:/opt/recipes/staticfiles
+          - nginx_config:/opt/recipes/nginx/conf.d
+          - ./mediafiles:/opt/recipes/mediafiles
+
+    - name: Tandoor (web)
+      community.general.docker_container:
+        image: nginx:mainline-alpine
+        container_name: tandoor-web
+        restart: always
+        ports:
+          - "{{ tandoor_port }}:80"
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - nginx_config:/etc/nginx/conf.d:ro
+          - staticfiles:/static
+          - ./mediafiles:/media
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower
