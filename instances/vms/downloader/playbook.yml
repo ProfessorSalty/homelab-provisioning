@@ -64,7 +64,7 @@
         env:
           PUID: "{{ lookup('env', 'UID') | default(1000, true) }}"
           PGID: "{{ lookup('env', 'GID') | default(1000, true) }}"
-        ports:
+        published_ports:
           - "{{ sonarr_port }}:8989"
         volumes:
           - "/etc/localtime:/etc/localtime:ro"
@@ -154,11 +154,11 @@
     - name: Start Readarr
       community.general.docker_container:
         image: hotio/readarr:nightly
-        name: readarr  
-        restart_policy: always  
-        published_ports:  
+        name: readarr
+        restart_policy: always
+        published_ports:
           - "{{ readarr_port }}:8787"
-        volumes:  
+        volumes:
           - "/etc/localtime:/etc/localtime:ro"
           - "{{ SERVICES_ROOT }}/${READARR_ROOT:-readarr}:/config"
           - "{{ BOOKS_ROOT }}:/books"
