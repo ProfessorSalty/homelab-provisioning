@@ -1,0 +1,27 @@
+---
+# Stagger updates
+# Remember that Ansible's random filter is exclusive
+- name: Set random update time
+  set_fact:
+    random_upgrade:
+      hour: "{{ 6 | random }}"
+      minute: "{{ 60 | random }}"
+      day: "{{ 7 | random }}"
+
+- include_role:
+    name: jnv.unattended-upgrades
+    apply:
+      become: yes
+    vars:
+      unattended_automatic_reboot_time: "{{ random_upgrade.hour }}:{{ random_upgrade.minute }}"
+      unattended_update_days: { "{{ random_upgrade.day }}" }
+      unattended_automatic_reboot: yes
+      unattended_origins_patterns:
+        # strings ore interpolated by the role
+        # keep the ${ ... } syntax
+        - 'origin=Ubuntu,archive=${distro_codename}-security'
+        - 'o=Ubuntu,a=${distro_codename}'
+        - 'o=Ubuntu,a=${distro_codename}-updates'
+        - 'o=Ubuntu,a=${distro_codename}-proposed-updates'
+        - "{{ additional_package_sources }}"
+

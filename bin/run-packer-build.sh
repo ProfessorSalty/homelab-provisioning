@@ -1,12 +1,26 @@
 #!/usr/bin/env bash
 
-ANSIBLE_FOLDER=ansible
-PACKER_FOLDER=packer
+CONFIGS_FOLDER=../images/templates
+VARS_FOLDER=../images/vars
+
+
+function check-for-jinja {
+  if [[ -z $(which jinja2) ]]; then
+    echo Please install jinja2 and the cli tool
+    echo pip install jinja2 jinja2-cli
+    exit 1
+  fi
+}
+
+function run-jinja {
+  check-for-jinja
+  jinja2 "$1" "$2" --strict
+}
 
 function run-packer-build {
-    packer build -var-file=$PACKER_FOLDER/vars/template.private.pkrvars.json \
-        -var-file=$PACKER_FOLDER/vars/$2 \
-        $PACKER_FOLDER/$1
+    packer build -var-file=$VARS_FOLDER/template.private.pkrvars.json \
+        -var-file=$VARS_FOLDER/$2 \
+        $CONFIGS_FOLDER/$1
 }
 
 function run-proxmox-packer-build {
@@ -16,3 +30,4 @@ function run-proxmox-packer-build {
 function run-raspi-packer-build {
     run-packer-build raspios-template.json $1
 }
+

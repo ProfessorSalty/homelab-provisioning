@@ -1,0 +1,9 @@
+encryption = {{  consul_gossip_token  }}
+
+server = true
+retry_join = "{{ consul_join_target }}"
+bootstrap_expect = {{ consul_server_count }}
+
+ui_config {
+  enabled = true
+}

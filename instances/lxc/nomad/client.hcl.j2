@@ -1,0 +1,9 @@
+client {
+    enabled = true
+    servers = ["{{ nomad_server_addr }}:{{ nomad_server_port }}"]
+
+    options {
+        "docker.volumes.enabled" = "true"
+    }
+}
+

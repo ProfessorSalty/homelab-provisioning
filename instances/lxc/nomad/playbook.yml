@@ -1,0 +1,41 @@
+- name: Install and setup Nomad servers with Consul client
+  hosts: nomad_servers
+  vars:
+    vault_role: "nomad-cluster"
+  tasks:
+    - name: Set the facts
+      run_once: yes
+      set_fact:
+        nomad_server_count: "{{ ansible_play_hosts | length }}"
+        nomad_join_target: "{{ ansible_play_hosts | first }}"
+        nomad_bind_addr: "{{ ansible_default_ipv4.address }}"
+        vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"
+        consul_token: "{{ lookup('env', 'CONSUL_TOKEN') }}"
+        
+    - include_role: ../../roles/install_consul_caddy
+      vars:
+        consul_template_file: consul.hcl.j2
+        proxy_target_port: "{{ nomad_ui_port }}"
+
+    - name: Install nomad
+      become: yes
+      package:
+        name: nomad
+        state: present
+
+    - name: Render shared config template and copy to nomad config directory
+      become: yes
+      template:
+        src: _shared.hcl.j2
+        dest: "{{ nomad_config_directory }}/_shared.hcl"
+        mode: 0700
+        
+    - name: Render server config template and copy to nomad config directory
+      become: yes
+      when: install_mode == "server"
+      template:
+        src: server.hcl.j2
+        dest: "{{ nomad_config_directory }}/server.hcl"
+        mode: 0700
+
+    - include_role: ../roles/setup_auto_updates

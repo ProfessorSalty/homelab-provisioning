@@ -1,4 +1,5 @@
 collections:
+  - pulp.pulp_installer
   - ansible.posix
   - ansible.netcommon
   - freeipa.ansible_freeipa

@@ -1,4 +1,5 @@
 module "startpage" {
+  source = "../template"
   pm_api_url   = var.pm_api_url
   pm_user_pass = var.pm_user_pass
   name         = "startpage"

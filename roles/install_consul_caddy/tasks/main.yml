@@ -1,0 +1,66 @@
+- include_role:
+    name: professorsalty.homelab.install_hashicorp_repo
+    
+- name: Install consul
+  become: yes
+  package:
+    name: consul
+    state: present
+
+- name: Ensure consul directories exists
+  become: yes
+  with_items:
+    - "{{ consul_data_directory }}"
+    - "{{ consul_config_directory }}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0700
+
+- name: Render template and copy consul config
+  become: yes
+  template:
+    src: consul.hcl.j2
+    dest: "{{ consul_data_directory }}/consul.hcl"
+    mode: 0700
+
+- name: Render template and copy extra consul config
+  become: yes
+  when: consul_template_file is defined
+  template:
+    src: "{{ consul_template_file }}"
+    dest: "{{ consul_config_directory }}/{{ consul_template_file | basename }}"
+    mode: 0700
+    
+- name: Set systemd-resolved to forward .consul DNS queries to consul
+  become: yes
+  copy:
+    path: /etc/systemd/resolved.conf.d/consul.conf
+    content: "[Resolve]
+  DNS=127.0.0.1:{{ consul_dns_port }}
+  DNSSEC=false
+  Domains=~consul"
+  notify: Restart resolved
+
+- include_role:
+    name: professorsalty.homelab.install_step_cli
+
+- include_role:
+    name: professorsalty.homelab.install_caddy
+
+- name: Write Caddyfile
+  template:
+    src: Caddyfile.j2
+    dest: "{{ caddyfile_path }}"
+
+- name: Reload Caddy config
+  command: "caddy run --config {{ caddyfile_path }}"
+  
+- name: Ensure Consul and Caddy are started by systemd
+  become: yes
+  with_items:
+    - caddy
+    - consul
+  service:
+    name: "{{ item }}"
+    state: enabled

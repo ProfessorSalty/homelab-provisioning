@@ -1,0 +1,27 @@
+- name: Install and setup consul
+  hosts: consul_servers
+  tasks:
+    - name: Set facts
+      run_once: yes
+      set_fact:
+        consul_server_count: "{{ ansible_play_hosts | length }}"
+        consul_join_target: "{{ ansible_play_hosts | first }}"
+        consul_gossip_token: lookup('community.general.random_string', base64=True)
+        ca_url: lookup('env', CA_URL)
+        ca_fingerprint: lookup('env', CA_FINGERPRINT)
+
+    - fail: "Please set the CA_URL environment variable"
+      when: ca_url is not defined
+
+    - fail: "Please set the CA_FINGERPRINT environment variable"
+      when: ca_fingerprint is not defined
+
+    - include_role: ../../roles/install_consul_caddy
+      vars:
+        consul_template_file: server.hcl.j2
+        proxy_target_port: "{{ consul_ui_port }}"
+
+    - include_role: ../roles/setup_auto_updates
+
+    - name: Output gossip token
+      debug: "Consul cluster gossip token: {{ consul_gossip_token }}"

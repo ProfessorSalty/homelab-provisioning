@@ -1,0 +1,3 @@
+collections:
+  - name: git+https://github.com/ProfessorSalty/professorsalty.homelab
+    type: git

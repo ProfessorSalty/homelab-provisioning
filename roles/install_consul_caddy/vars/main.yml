@@ -1,0 +1,13 @@
+consul_node_name: 
+consul_datacenter_name:
+consul_data_directory:
+consul_config_directory: 
+consul_dns_port: 
+consul_http_port: 
+consul_gossip_token:
+proxy_target_port:
+caddyfile_path: 
+consul_template_file:
+hostname: 
+ca_url: 
+ca_fingerprint: 

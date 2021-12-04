@@ -1,0 +1,3 @@
+---
+# vars file for setup_auto_updates
+additional_package_sources: list

@@ -1,0 +1,38 @@
+- name: Setup Bitwarden
+  hosts: default
+  remote_user: toor
+  collections:
+      - professorsalty.homelab
+
+  tasks:
+    - name: Include common env vars
+      include_vars: ../../default_env_vars.yml
+
+    - name: Set the hostname
+      include_role:
+        name: set_hostname
+      vars:
+        hostname: bitwarden
+        localdomain: land
+
+    - name: Allow ports 
+      include_role:
+        name: ufw_allow_ports
+      vars:
+        configs:
+          - service: Bitwarden
+            port: 80
+
+    - name: Start vaultwarden container
+      community.general.docker_container:
+        image: bitwardenrs/server:latest
+        name: bitwarden
+        restart_policy: always
+        env:
+          - WEBSOCKET_ENABLED=true  # Enable WebSocket notifications.
+        volumes:
+          - ./bw-data:/data
+
+    - name: Run watchtower with proxy
+      include_role:
+        name: run_watchtower

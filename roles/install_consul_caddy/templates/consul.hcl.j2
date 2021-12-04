@@ -1,0 +1,20 @@
+node_name = "{{ consul_node_name }}"
+
+data_dir = "{{ consul_data_directory }}"
+config_dir = "{{  consul_config_directory }}"
+datacenter = "{{ consul_datacenter_name }}"
+
+ca_file = "{{ ca_file }}"
+cert_file = "{{ cert_file }}"
+key_file = "{{ key_file }}"
+
+encryption = "{{ consul_gossip_token }}"
+retry_join = "{{ consul_server_addr }}"
+
+verify_incoming = true
+verify_outgoing = true
+verify_server_hostname = true
+
+performance {
+  raft_multiplier = 1
+}

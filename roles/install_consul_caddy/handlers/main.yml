@@ -1,0 +1,11 @@
+- name: Restart resolved
+  become: yes
+  service:
+    name: systemd-resolved
+    state: restarted
+    
+- name: Restart Consul
+  become: yes
+  service:
+    name: consul
+    state: restarted

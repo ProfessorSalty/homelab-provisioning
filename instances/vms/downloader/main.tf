@@ -1,7 +1,7 @@
 module "downloader" {
+  source          = "../template"
   pm_api_url      = var.pm_api_url
   pm_user_pass    = var.pm_user_pass
-  source          = "github.com/ProfessorSalty/terraform-homelab"
   name            = "downloader"
   target_node     = var.proxmox_primary
   vmid            = 506
@@ -9,7 +9,6 @@ module "downloader" {
   os_type         = var.os_type_ubuntu
   cores           = 2
   memory          = 16384
-  vm_playbook_dir = var.vm_playbook_dir
 
   networks = [{
     model  = "virtio"

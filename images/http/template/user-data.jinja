@@ -1,0 +1,19 @@
+#cloud-config
+autoinstall:
+    version: 1
+    locale: en_US
+    keyboard:
+        layout: en
+    apt:
+        proxy: {{ apt_proxy_address }}
+    ssh:
+        install-server: true
+        allow-pw: false
+    packages:
+        - qemu-guest-agent
+    package_update: true
+    package_upgrade: true
+    identity:
+        hostname: {{ hostname }}
+        username: {{ username }}
+        password: {{ user_password }}

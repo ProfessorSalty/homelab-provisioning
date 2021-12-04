@@ -1,0 +1,27 @@
+- name: Install and setup vault cluster
+  hosts: vault_servers
+  tasks:
+    - name: Set the facts
+      run_once: yes
+      set_fact:
+        vault_bind_addr: "{{ ansible_default_ipv4.address }}"
+        
+    - include_role: ../../roles/install_consul_caddy
+      vars:
+        consul_template_file: consul.hcl.j2
+        proxy_target_port: "{{ vault_ui_port }}"
+        
+    - name: Install vault
+      become: yes
+      package:
+        name: vault
+        state: present
+        
+    - name: Render template and copy vault config
+      become: yes
+      template:
+        src: vault.hcl.j2
+        dest: "{{ vault_config_directory }}/vault.hcl"
+        mode: 0700
+        
+    - include_role: ../roles/setup_auto_updates

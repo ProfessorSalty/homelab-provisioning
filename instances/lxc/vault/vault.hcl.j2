@@ -1,0 +1,14 @@
+ui = true
+
+listener "tcp" {  
+    address       = "{{ vault_bind_addr }}:{{ vault_ui_port }}"  
+}
+
+storage "consul" {  
+    address = "{{ consul_addr }}:{{ consul_http_port }}"
+    path    = "{{ consul_vault_path }}"
+}
+
+telemetry {
+  prometheus_retention_time = "60s"
+}
