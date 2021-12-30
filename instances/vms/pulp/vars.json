@@ -1,0 +1,7 @@
+{
+  "target_node": "vm1",
+  "template_password": "testtest",
+  "source_template": "centos-8-default_20201210_amd64.tar.xz",
+  "data_storage_path": "/mnt/test",
+  "ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJYJJiJxxjKyMzdvoU+htjbvu9wmy1Bcqkw5RKCY+c8O nostromo"
+}

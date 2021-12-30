@@ -1,5 +1,5 @@
 {
-        "iso_storage"         : "nas1-backups",
+        "iso_storage"         : "diskimages",
         "iso_file"            : "ubuntu-20.04-live-server-amd64.iso",
         "template_name"       : "ubuntu-20.04-template",
         "template_description": "Ready-to-run build of Ubuntu 20.04 (LTS) with * Netdata * Mosh * Fish * Rsyslog pointing to central server",

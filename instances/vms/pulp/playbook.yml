@@ -1,0 +1,48 @@
+- hosts: pulp_servers
+  collections:
+    - pulp.pulp_installer
+    - professorsalty.homelab
+  vars:
+    ca_email: ''
+  environment:
+    DJANGO_SETTINGS_MODULE: pulpcore.app.settings
+      
+  tasks:
+    - name: install pulp
+      include_role: 
+        name: pulp_all_services
+      
+    - set_fact:
+        ca_url: "{{ lookup('env', CA_URL) }}"
+        ca_fingerprint: "{{ lookup('env', CA_FINGERPRINT) }}"
+        hostname: "{{ ansible_fqdn }}"
+        target_port: "{{ pulp_ui_port | default('8080') {{"
+
+    - fail: 
+        msg: "Please set the CA_URL environment variable"
+      when: ca_url is not defined
+
+    - fail: 
+        msg: "Please set the CA_FINGERPRINT environment variable"
+      when: ca_fingerprint is not defined
+
+    - name: Install and setup certificate authority
+      include_role:
+        name: professorsalty.homelab.install_step_cli
+
+    - name: Install reverse proxy
+      vars:
+        caddyfile_template: Caddyfile.j2
+      include_role:
+        name: professorsalty.homelab.install_caddy
+        
+    - name: Write Caddyfile
+      template:
+        src: Caddyfile.j2
+        dest: "{{ caddyfile_path }}"
+
+    - name: Reload Caddy config
+      command: "caddy run --config {{ caddyfile_path }}"
+    
+    - include_role: 
+        name: ../roles/setup_auto_updates

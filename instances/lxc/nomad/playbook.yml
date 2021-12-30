@@ -2,6 +2,12 @@
   hosts: nomad_servers
   vars:
     vault_role: "nomad-cluster"
+  handlers:
+    - name: Restart nomad
+      become: yes
+      service:
+        name: nomad
+        state: restarted
   tasks:
     - name: Set the facts
       run_once: yes
@@ -11,7 +17,21 @@
         nomad_bind_addr: "{{ ansible_default_ipv4.address }}"
         vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"
         consul_token: "{{ lookup('env', 'CONSUL_TOKEN') }}"
+        ca_url: "{{ lookup('env', CA_URL) }}"
+        ca_fingerprint: "{{ lookup('env', CA_FINGERPRINT) }}"
+
+    - fail: "Please set the CA_URL environment variable"
+      when: ca_url is not defined
+
+    - fail: "Please set the CA_FINGERPRINT environment variable"
+      when: ca_fingerprint is not defined
         
+    - fail: "Please set the VAULT_TOKEN environment variable"
+      when: vault_token is not defined
+
+    - fail: "Please set the CONSUL_TOKEN environment variable"
+      when: consul_token is not defined
+    
     - include_role: ../../roles/install_consul_caddy
       vars:
         consul_template_file: consul.hcl.j2
@@ -37,5 +57,13 @@
         src: server.hcl.j2
         dest: "{{ nomad_config_directory }}/server.hcl"
         mode: 0700
+      notify: Restart nomad
+
+    - name: Bootstrap nomad acl
+      command: nomad acl bootstrap -json
+      register: nomad_management_token
 
     - include_role: ../roles/setup_auto_updates
+
+    - name: output important info
+      debug: nomad_management_token

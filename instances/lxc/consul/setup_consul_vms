@@ -1,0 +1,9 @@
+#!/bin/bash
+
+required_vars=("PROXMOX_URL" "PROXMOX_USER" "PROXMOX_PASSWORD")
+for i in "${required_vars[@]}"; do
+  if [ -z "${i}" ]; then
+    echo "Please set ${i}"
+    exit 1
+  fi
+done

@@ -1,10 +1,24 @@
 - name: Install and setup vault cluster
   hosts: vault_servers
+  handlers:
+    - name: Restart vault
+      become: yes
+      service:
+        name: vault
+        state: restarted
   tasks:
     - name: Set the facts
       run_once: yes
       set_fact:
         vault_bind_addr: "{{ ansible_default_ipv4.address }}"
+        ca_url: "{{ lookup('env', CA_URL) }}"
+        ca_fingerprint: "{{ lookup('env', CA_FINGERPRINT) }}"
+
+    - fail: "Please set the CA_URL environment variable"
+      when: ca_url is not defined
+
+    - fail: "Please set the CA_FINGERPRINT environment variable"
+      when: ca_fingerprint is not defined
         
     - include_role: ../../roles/install_consul_caddy
       vars:
@@ -23,5 +37,13 @@
         src: vault.hcl.j2
         dest: "{{ vault_config_directory }}/vault.hcl"
         mode: 0700
+      notify: Restart vault
+
+    - name: Enable secrets backends
+      with_items:
+        - nomad
+        - consul
+        - pki
+      command: vault secrets enable {{ item | quote }}
         
     - include_role: ../roles/setup_auto_updates

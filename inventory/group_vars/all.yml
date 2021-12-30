@@ -5,14 +5,16 @@ consul_config_directory: /etc/consul.d
 consul_dns_port: 8600
 consul_http_port: 8500
 consul_server_addr: consul
+consul_vault_path: vault
 
 vault_addr: vault
 vault_namespace: admin
 vault_data_dir: /opt/vault
 vault_config_dir: /etc/vault.d
 vault_ui_port: 8200
-vault_consul_path: vault
 
 nomad_data_dir: /opt/nomad
 nomad_config_dir: /etc/nomad.d
 nomad_ui_port: 4646
+
+ca_email: me@gregsmith.nyc

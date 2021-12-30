@@ -1,0 +1,11 @@
+[consul_servers]
+consul1     ansible_user=root
+
+[nomad_servers]
+
+[vault_servers]
+
+[ipaserver]
+
+[pulp_servers]
+pulp    ansible_user=root

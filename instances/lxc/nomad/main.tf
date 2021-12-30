@@ -5,6 +5,7 @@ module "nomad" {
 
   pm_api_url = var.pm_api_url
   pm_user_pass = var.pm_user_pass
+  pm_user = var.pm_user
   source_template = var.source_template
   data_storage_path = var.data_storage_path
   target_node = var.target_node

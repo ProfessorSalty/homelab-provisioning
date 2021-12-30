@@ -6,9 +6,9 @@
       set_fact:
         consul_server_count: "{{ ansible_play_hosts | length }}"
         consul_join_target: "{{ ansible_play_hosts | first }}"
-        consul_gossip_token: lookup('community.general.random_string', base64=True)
-        ca_url: lookup('env', CA_URL)
-        ca_fingerprint: lookup('env', CA_FINGERPRINT)
+        consul_gossip_token: "{{ lookup('community.general.random_string', base64=True) }}"
+        ca_url: "{{ lookup('env', CA_URL) }}"
+        ca_fingerprint: "{{ lookup('env', CA_FINGERPRINT) }}"
 
     - fail: "Please set the CA_URL environment variable"
       when: ca_url is not defined
@@ -21,7 +21,35 @@
         consul_template_file: server.hcl.j2
         proxy_target_port: "{{ consul_ui_port }}"
 
+    - name: Bootstrap consul ACL
+      command: consul acl bootstrap -format=json
+      register: consul_bootstrap_token
+
+    - name: Create management token for Vault
+      command: "consul acl token create -policy-name=global-management -format=json -token={{ consul_bootstrap_token.secretId }}"
+      register: consul_vault_management_token
+
+    - name: Create management token for Nomad
+      command: "consul acl token create -policy-name=global-management -format=json -token={{ consul_bootstrap_token.secretId }}"
+      register: consul_nomad_management_token
+
+    - name: Create management token for controller
+      command: "consul acl token create -policy-name=global-management -format=json -token={{ consul_bootstrap_token.secretId }}"
+      register: consul_controller_management_token
+
     - include_role: ../roles/setup_auto_updates
 
     - name: Output gossip token
       debug: "Consul cluster gossip token: {{ consul_gossip_token }}"
+
+    - name: Output bootstrap token
+      debug: "Consul cluster bootstrap token: {{ consul_bootstrap_token }}"
+
+    - name: Output vault management token
+      debug: "Generated management token for vault: {{ consul_vault_management_token }}"
+
+    - name: Output nomad management token
+      debug: "Generated management token for nomad: {{ consul_nomad_management_token }}"
+
+    - name: Output controller management token
+      debug: "Generated management token for controller: {{ consul_controller_management_token }}"

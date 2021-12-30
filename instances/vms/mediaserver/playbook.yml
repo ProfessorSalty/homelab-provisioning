@@ -1,9 +1,14 @@
 - name: Setup mediaserver
   hosts: default
   remote_user: toor
+  vars:
+    job_name: mediaserver
+    jellyfin_port: 8096
+    airsonic_port: 8080
+    calibre_port: 8083
   collections:
       - professorsalty.homelab
-
+      - ansible.community
   tasks:
     - name: Set hostname
       include_role:
@@ -23,11 +28,23 @@
       include_role:
         name: mount_smb_shares
       vars:
-        project_name: mediaserver
+        project_name: "{{ job_name }}"
         smb_credentials:
           - username: mediauser
             password:
             sharepath: media
+
+    - name: Install infrastructure
+      include_role:
+        name: install_step_cli
+
+    - name: Start the nomad job
+      nomad_job:
+        host: 
+        content: "{{ lookup('file', '{{job_name}}.nomad') }}"
+        token:
+        state: present
+        force_start: yes
 
     - name: Allow ports 
       include_role:
@@ -40,57 +57,3 @@
             port: "{{airsonic_port}}"
           - service: CalibreWeb
             port: "{{calibre_port}}"
-
-    - name: Jellyfin
-      community.general.docker_container:
-        image: jellyfin/jellyfin
-        name: jellyfin
-        restart_policy: unless-stopped
-        published_ports:
-          - "{{jellyfin_port}}:8096"
-        volumes:
-          - "{{MEDIA_ROOT}}:/media:ro"
-          - "{{SERVICES_ROOT}}/jellyfin/config:/config"
-        env:
-          - PUID
-          - PGID
-          - TZ
-
-    - name: Airsonic
-      community.general.docker_container:
-        image: airsonicadvanced/airsonic-advanced:latest
-        container_name: airsonic
-        restart_policy: unless-stopped
-        env:
-          - PUID
-          - PGID
-          - TZ
-        published_ports:
-          - "{{airsonic_port}}:8080"
-        volumes:
-          - "{{SERVICES_ROOT}}/airsonic/var/airsonic"
-          - "{{MEDIA_ROOT}}/music:/var/music"
-          - "{{MEDIA_ROOT}}/podcasts:/var/podcasts"
-          - "{{MEDIA_ROOT}}/playlists:/var/playlists"
-          - ./sites-enabled:/etc/apache2/sites-enabled
-
-    - name: Calibre Web
-      community.general.docker_container:
-        image: technosoft2000/calibre-web
-        name: calibre-web
-        restart_policy: unless-stopped
-        env:
-          - PUID
-          - PGID
-          - USE_CONFIG_DIR=true
-          - TZ
-        pubished_ports:
-          - "{{calibre_port}}:8083"
-        volumes:
-          - /etc/localtime:/etc/localtime:ro
-          - "{{BOOKS_ROOT}}:/books"
-          - "{{SERVICES_ROOT}}/calibre-web:/calibre-web"
-
-    - name: Run watchtower with proxy
-      include_role:
-        name: run_watchtower

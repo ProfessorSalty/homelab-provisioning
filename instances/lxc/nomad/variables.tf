@@ -1,17 +1,18 @@
 variable "pm_api_url" {
   type = "string"
-  default = ""
+}
+
+variable "pm_user" {
+  type = "string"
 }
 
 variable "pm_user_pass" {
   type = "string"
   sensitive = true
-  default = ""
 }
 
 variable "source_template" {
   type = "string"
-  default = ""
 }
 
 variable "data_storage_path" {
@@ -21,7 +22,6 @@ variable "data_storage_path" {
 
 variable "target_node" {
   type = "string"
-  default = ""
 }
 
 variable "template_password" {

@@ -1,0 +1,2 @@
+consul_node_name: dc1
+consul_datacenter_name: home

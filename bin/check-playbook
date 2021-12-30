@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+CHECK_ALL=false
+
+if [ -z "$(which ansible-playbook)" ]; then
+    echo "Please install ansible-playbook"
+    exit 1
+fi
+
+source "$(dirname $0)/set-environment"
+
+function help() {
+  echo "Usage: check_playbook [--all] [<service_name>]"
+}
+
+function set_opts() {
+   local OPTIND opt 
+   
+   # Transform long options to short ones
+   for arg in "$@"; do
+     shift
+     case "$arg" in
+       "--all")  set -- "$@" "-a";;
+       "--help") help; exit 1;;
+       "--"*)    help; exit 1;;
+       *)        set -- "$@" "$arg"
+     esac
+   done
+   
+   while getopts ":a" opt; do
+     case $opt in
+      a) CHECK_ALL=true;;
+      /?) help; exit 0;;
+     esac
+   done
+   shift $((OPTIND -1))
+}
+
+function main() {
+  if [ "$#" -ne 1 ]; then
+      help
+      exit 1
+  fi
+  set_opts "$@"
+  
+  if [ $CHECK_ALL = true ]; then
+   find . -name playbook.yml -type f | xargs ansible-playbook --syntax-check 
+  else
+   TARGET=$(find "$ROOT_FOLDER" -type d -name "$1")
+   if [ ! "$TARGET" ]; then
+       echo "No service by the name of $1"
+       exit 1
+   fi
+   TARGET_PATH=$(realpath "$TARGET")
+   ansible-playbook --syntax-check "$TARGET_PATH/playbook.yml"
+  fi 
+}
+
+main "$@"

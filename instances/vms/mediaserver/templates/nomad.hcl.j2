@@ -1,0 +1,51 @@
+client {
+  enabled = true
+
+  server_join {
+    retry_join = ["{{ nomad_server }}"]
+  }
+
+  host_volume "media" {
+    path = "{{ media_mnt }}"
+    read_only = false
+  }
+
+  host_volume "books" {
+    path = "{{ media_mnt }}/books"
+    read_only = false
+  }
+
+  host_volume "music" {
+    path = "{{ media_mnt }}/music"
+    read_only = false
+  }
+
+  host_volume "podcasts" {
+    path = "{{ media_mnt }}/podcasts"
+    read_only = false
+  }
+
+  host_volume "jellyfin_config" {
+    path = "{{ jellyfin_config }}"
+    read_only = false
+  }
+
+  host_volume "airsonic_config" {
+    path = "{{ airsonic_config }}"
+    read_only = false
+  }
+
+  host_volume "airsonic_playlists" {
+    path = "{{ airsonic_config }}/airsonic_playlists"
+    read_only = false
+  }
+
+  host_volume "calibre_web_config" {
+    path = "{{ calibre_web_config }}"
+    read_only = false
+  }
+
+  meta {
+    machine_name = "mediaserver"
+  }
+}

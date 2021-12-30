@@ -1,8 +1,8 @@
 {
-    "proxmox_username"     : "packer@pve",
+    "proxmox_username"     : "automation@pve",
     "proxmox_password"     : "",
     "user_password"        : "",
-    "proxmox_url"          : "https://vm1.land:8006",
+    "proxmox_host"          : "vm1.land",
     "syslog_server_address": "syslog",
     "apt_proxy_address"    : "",
     "username": "",

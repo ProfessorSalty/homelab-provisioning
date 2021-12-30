@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+export ROOT_FOLDER="$(dirname $(dirname $(realpath $0)))"
+export ANSIBLE_INVENTORY_DIR="$ROOT_FOLDER/inventory"
+export LIB_FOLDER="$ROOT_FOLDER/lib"
+export ANSIBLE_REQUIREMENTS_FILE="$LIB_FOLDER/requirements.yml"
+export ROLES_PATH="$LIB_FOLDER/roles"
+export BIN_FOLDER="$ROOT_FOLDER/bin"
+export VARS_FOLDER="$ROOT_FOLDER/images/vars"
+export PACKER_TEMPLATE_DIR="$ROOT_FOLDER/images/templates"
+export IMAGES_DIR="$ROOT_FOLDER/images"

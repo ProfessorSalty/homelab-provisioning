@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+if [ -z "$(which ansible-playbook)" ]; then
+    echo "Please install ansible-playbook"
+    exit 1
+fi
+
+source "$(dirname $0)/set-environment"
+
+if [ ! "$1" ]; then
+    echo "Please specify a play to run"
+    exit 1
+fi
+
+TARGET_PATH="$(realpath $(find $ROOT_FOLDER -type d -name $1))"
+
+if [ -z "$TARGET_PATH" ]; then
+    echo "Target directory $TARGET_SETUP does not exist"
+    exit 1
+fi
+
+echo "Running the playbook for $1"
+export ROLES_PATH
+ansible-playbook -i $ANSIBLE_INVENTORY_DIR $TARGET_PATH/playbook.yml

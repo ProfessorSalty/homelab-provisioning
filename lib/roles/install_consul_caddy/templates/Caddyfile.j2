@@ -1,0 +1,7 @@
+{
+    email {{ ca_email }}
+    acme_ca https://{{ ca_url }}/acme/acme/directory
+}
+
+{{ hostname }}
+reverse_proxy localhost:{{ proxy_target_port  }}

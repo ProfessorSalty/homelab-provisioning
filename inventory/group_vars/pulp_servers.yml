@@ -1,0 +1,20 @@
+---
+pulp_default_admin_password: "{{ lookup('env', 'PULP_ADMIN_PASSWORD'}}"
+pulp_install_plugins:
+  pulp-npm: {}
+  pulp-python: {}
+  pulp-rpm: {}
+  pulp-ansible: {}
+  pulp-container: {}
+  pulp-deb: {}
+  pulp-file: {}
+#  galaxy-ng: {}
+  # pulp-2to3-migration: {}
+  # pulp-certguard: {}
+  # pulp-cookbook: {}
+  # pulp-gem: {}
+  # pulp-maven: {}
+pulp_settings:
+  secret_key: "{{ lookup('env', 'PULP_SECRET_KEY') }}"
+  content_origin: "https://{{ ansible_fqdn }}"
+pulp_ui_port: 8080
