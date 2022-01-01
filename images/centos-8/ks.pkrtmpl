@@ -1,4 +1,5 @@
-#version=F33
+#version=RHEL8
+
 # Use text install
 text --non-interactive
 
@@ -53,31 +54,45 @@ python3-libselinux
 
 # Keyboard layouts
 keyboard --vckeymap=us --xlayouts='us'
+
 # System language
 lang en_US.UTF-8
+
+# Set timezone
+timezone ${timezone}
+
+# Agree to the terms
 eula --agreed
+
+# Ensure we install to the correct disk
 ignoredisk --only-use=sda
+
 # Partition clearing information
 clearpart --none --initlabel
 autopart --nohome --nolvm
+
 # Use CDROM installation media
 cdrom
 reboot --eject
 
 selinux --disabled
 
-#Root password
-# python3 -c 'import crypt; print(crypt.crypt("somesecret", crypt.mksalt(crypt.METHOD_SHA512)))'
-rootpw --iscrypted "$6$jq/pVt6WtvmV7776$k1P60s1GrSZZCBHHR1Q4hPD1Jak2/juX8LVIvPTYJFRNu1YyjL0ll5GespLxPuezx.fqml9t/I9pCJh1vH0XN1"
-# rootpw --plaintext mantle inward maestro
+# Root password
+rootpw ${root_password}
+
+# Create template user
+user --name=${template_user.name} --password=${template_user.password}
+
 # Run the Setup Agent on first boot
 firstboot --disabled
+
 # Do not configure the X Window System
 skipx
+
 # System services
 services --enabled="chronyd,sshd"
 
-%addon com_redhat_kdump --enable --reserve-mb='128'
+%addon com_redhat_kdump --enable --reserve-mb='auto'
 
 %end
 
@@ -88,9 +103,15 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
 %post
+hostnamectl set-hostname ${hostname}
+hostnamectl --pretty set-hostname ${hostname}
+cp /etc/hostname /mnt/sysimage/etc/hostname
+cp /etc/machine-info /mnt/sysimage/etc/machine-info
 
 # this is installed by default but we don't need it in virt
 echo "Removing linux-firmware package."
 yum -C -y remove linux-firmware
+
+echo ${controller_ssh_pub_key_file} >> /home/${template_user.name}/.ssh/authorized_keys
 
 %end

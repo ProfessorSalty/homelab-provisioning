@@ -4,8 +4,10 @@ autoinstall:
     locale: en_US
     keyboard:
         layout: en
+    %{ if apt_proxy_address }
     apt:
         proxy: {{ apt_proxy_address }}
+    %{ endif }
     ssh:
         install-server: true
         allow-pw: false
@@ -15,5 +17,5 @@ autoinstall:
     package_upgrade: true
     identity:
         hostname: {{ hostname }}
-        username: {{ username }}
-        password: {{ user_password }}
+        username: {{ template_user.name }}
+        password: {{ template_user.password }}

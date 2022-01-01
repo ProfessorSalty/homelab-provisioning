@@ -1,5 +1,7 @@
 - name: Provision Ubuntu Template
   hosts: default
+  vars:
+    add_docker: no
   collections:
       - professorsalty.homelab
 
@@ -63,3 +65,9 @@
         name: prepare_cloudinit
     - include_role:
         name: remove_netplan
+    - include_role: 
+      when: add_docker 
+        name: install_docker
+      vars:
+        loki_server_address: logger.land:3100
+        template_username: toor

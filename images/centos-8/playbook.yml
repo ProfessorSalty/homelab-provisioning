@@ -4,11 +4,6 @@
   remote_user: root
   collections:
     - professorsalty.homelab
-
-  pre_tasks:
-    - include_role:
-        name: add_key
-
   tasks:
     - include_role: 
         name: install_server_packages

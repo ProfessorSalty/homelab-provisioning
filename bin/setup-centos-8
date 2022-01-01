@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-source "$(dirname $0)/set-environment"
-source "$BIN_FOLDER/run-packer-build"
-
-run-proxmox-packer-build centos-8-vars.json

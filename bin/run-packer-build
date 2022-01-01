@@ -1,42 +1,41 @@
 #!/usr/bin/env bash
 
-source "$(dirname $0)/set-environment"
+set -e
 
-function check-for-jinja {
-  if [[ -z $(which jinja2) ]]; then
-    echo Please install jinja2 and the cli tool
-    echo pip install jinja2 jinja2-cli
-    exit 1
-  fi
-}
-
-function run-jinja {
-  check-for-jinja
-  jinja2 "$1" "$2" --strict
-}
-
-function run-packer-build {
-    packer build -var-file="$VARS_FOLDER"/template.private.pkrvars.json \
-        -var-file="$VARS_FOLDER"/"$2" \
-        "$PACKER_TEMPLATE_DIR/$1"
-}
-
-function run-proxmox-packer-build {
-    run-packer-build proxmox-template.json "$1"
-}
-
-function run-raspi-packer-build {
-    run-packer-build raspios-template.json "$1"
-}
+source "$(dirname "$0")/set-environment"
 
 function main() {
-  TARGET="$(find $IMAGES_DIR -type d -name $1)"
-  if [ -z $TARGET ]; then
-      echo "There is no build configuration for $1"
-      exit 1
+  local TARGET TARGET_PATH CONTROLLER_TIMEZONE SECRETS_FILE
+  
+  trap 'rm -f $SECRETS_FILE' EXIT
+
+  TARGET="$(find "$IMAGES_DIR" -type d -name "$1")"
+
+  if [ -z "$TARGET" ]; then
+    echo "There is no build configuration for $1"
+    exit 1
   fi
-  TARGET_PATH="$(realpath $TARGET)"
-  echo "Running build at $TARGET_PATH"
+
+  TARGET_PATH="$(realpath "$TARGET")"
+
+  printf 'Running build at %s\n\n' "$TARGET_PATH"
+
+  HOMELAB_SECRETS=$(realpath ~/.homelab-secrets.json)
+
+  if [ -z "$HOMELAB_SECRETS" ]; then
+    echo "No secrets file found. Please create $HOMELAB_SECRETS"
+    exit 1
+  fi
+
+  CONTROLLER_TIMEZONE=$(cat /etc/timezone)
+  SECRETS_FILE=$(mktemp --suffix ".json" -p .)
+
+  "$BIN_FOLDER/process-json-secrets" "$HOMELAB_SECRETS" "$1" >> "$SECRETS_FILE"
+  
+  packer build -var="timezone=$CONTROLLER_TIMEZONE" \
+    -var="template-name=$TARGET" \
+    -var-file="$SECRETS_FILE" \
+    "$TARGET_PATH"
 }
 
 main "$@"

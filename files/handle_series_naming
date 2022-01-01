@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# wrapper for renaming script that uses filebot
-# exit if the mode passed in is Test
-# need the following options:
-#   seriesType
-#   TVDB id
-
-# filename is first positional parameter
