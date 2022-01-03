@@ -16,18 +16,19 @@ locals {
   ansible_requirements_file = "${path.root}/../../lib/requirements.yml"
   ansible_playbook_file     = "${path.root}/playbook.yml"
   proxmox_url               = "${var.proxmox_server_protocol}://${var.proxmox_host}:${var.proxmox_server_port}/api2/json"
-  boot_command              = ["<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"]
+  boot_command              = ["<tab> inst.text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"]
   boot_wait                 = "6s"
   os                        = "l26"
   iso_file_path             = "${var.iso_storage}:iso/${var.iso_file}"
   ssh_timeout               = "90m"
-  scsi_controller           = "virtio-scsi"
+  scsi_controller           = "virtio-scsi-pci"
   main_disk_format          = "raw"
   storage_pool_type         = "lvm-thin"
   main_disk_type            = "scsi"
   network_adapter_model     = "virtio"
+  proxmox_username_token    = "${var.proxmox_user}!${var.proxmox_api_token.id}"
   http_content              = {
-    "ks.cfg" = templatefile("ks.pkrtmpl", {
+    "/ks.cfg" = templatefile("ks.pkrtmpl", {
       template_user : {
         name : var.template_username,
         password : var.template_user_password,
@@ -43,7 +44,7 @@ locals {
 source "proxmox" "centos8template" {
   # proxmox auth
   node        = var.proxmox_node
-  username    = var.proxmox_user
+  username    = local.proxmox_username_token
   token       = var.proxmox_api_token.secret
   proxmox_url = local.proxmox_url
 
@@ -54,10 +55,11 @@ source "proxmox" "centos8template" {
   os                   = local.os
 
   # cloud_init
-  cloud_init   = var.cloud_init
-  boot_command = local.boot_command
-  boot_wait    = local.boot_wait
-  http_content = local.http_content
+  cloud_init              = var.cloud_init
+  cloud_init_storage_pool = var.storage_pool
+  boot_command            = local.boot_command
+  boot_wait               = local.boot_wait
+  http_content            = local.http_content
 
   # build settings
   qemu_agent  = true
@@ -92,11 +94,10 @@ build {
   name    = "centos"
   sources = ["source.proxmox.centos8template"]
 
-  provisioner "ansible" {
-    extra_arguments = ["--extra-vars", "ansible_become_pass=\"${var.template_user_password}\""]
-    galaxy_file     = local.ansible_requirements_file
-    playbook_file   = local.ansible_playbook_file
-  }
+    provisioner "ansible" {
+      galaxy_file     = local.ansible_requirements_file
+      playbook_file   = local.ansible_playbook_file
+    }
 }
 
 variable "proxmox_server_protocol" {
@@ -154,8 +155,7 @@ variable "proxmox_user" {
 }
 
 variable "proxmox_api_token" {
-  sensitive = true
-  type      = object({
+  type = object({
     id     = string
     secret = string
   })
@@ -183,12 +183,12 @@ variable "iso_file" {
 }
 
 variable "storage_pool" {
-  type = string
+  type    = string
   default = "local-lvm"
 }
 
 variable "network_bridge" {
-  type = string
+  type    = string
   default = "vmbr0"
 }
 
@@ -197,6 +197,6 @@ variable "template-name" {
 }
 
 variable "main_drive_size" {
-  type = string
+  type    = string
   default = "32G"
 }

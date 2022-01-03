@@ -1,6 +1,6 @@
 ---
 - name: Setup Centos 8
-  hosts: default
+  hosts: all
   remote_user: root
   collections:
     - professorsalty.homelab

@@ -5,14 +5,6 @@ text --non-interactive
 
 %packages 
 qemu-guest-agent
-# @^minimal-environment
-openssh-server
-openssh-clients
-sudo
-kexec-tools
-curl
-python3
-python3-libselinux
 
 -plymouth
 -plymouth-core-libs
@@ -81,7 +73,7 @@ selinux --disabled
 rootpw ${root_password}
 
 # Create template user
-user --name=${template_user.name} --password=${template_user.password}
+user --name=${template_user.name} --password=${template_user.password} --groups=wheel
 
 # Run the Setup Agent on first boot
 firstboot --disabled
@@ -102,16 +94,12 @@ pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
-%post
-hostnamectl set-hostname ${hostname}
-hostnamectl --pretty set-hostname ${hostname}
-cp /etc/hostname /mnt/sysimage/etc/hostname
-cp /etc/machine-info /mnt/sysimage/etc/machine-info
+%post 
+#!/usr/bin/env bash
 
-# this is installed by default but we don't need it in virt
-echo "Removing linux-firmware package."
-yum -C -y remove linux-firmware
-
-echo ${controller_ssh_pub_key_file} >> /home/${template_user.name}/.ssh/authorized_keys
+mkdir -p /home/${template_user.name}/.ssh
+chown ${template_user.name}:${template_user.name} /home/${template_user.name}/.ssh
+echo "${controller_ssh_pub_key_file}" >> /home/${template_user.name}/.ssh/authorized_keys
+echo "PasswordAuthentication No" >> /etc/ssh/ssh_config.d/99-nopassword.conf
 
 %end
