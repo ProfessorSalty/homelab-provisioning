@@ -15,27 +15,22 @@ variable "pm_user" {
 
 variable "data_storage_path" {
   type = string
-  default = ""
 }
 
 variable "target_node" {
   type = string
-  default = ""
 }
 
-variable "target_iso" {
+variable "clone_source" {
   type = string
-  default = ""
 }
 
 variable "template_password" {
   type = string
   sensitive = true
-  default = ""
 }
 
 variable "ssh_public_key" {
   type = string
-  default = ""
 }
 

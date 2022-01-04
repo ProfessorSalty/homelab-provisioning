@@ -5,5 +5,11 @@
   collections:
     - professorsalty.homelab
   tasks:
+    - name: Install EPEL repo
+      become: yes
+      dnf:
+        name: epel-release
+        state: present
+        update_cache: yes
     - include_role: 
         name: install_server_packages

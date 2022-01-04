@@ -1,17 +1,16 @@
 resource "proxmox_vm_qemu" "pulp_server" {
+  // does running this change any of the template's settings?
   name        = "pulp_server"
   target_node = var.target_node
-  iso         = var.target_iso
+  clone       = var.clone_source
   onboot      = true
-  oncreate      = true
+  oncreate    = true
 
-  cores       = 1
-  memory      = 512
-  balloon     = 2048
+  cores   = 1
+  memory  = 512
+  balloon = 2048
 
-  agent       = 1
-  hotplug     = "network,disk,cpu"
-  ipconfig0   = "ip=dhcp"
-  
-  sshkeys     = var.ssh_public_key
+  agent     = 1
+  ipconfig0 = "ip=dhcp"
+
 }

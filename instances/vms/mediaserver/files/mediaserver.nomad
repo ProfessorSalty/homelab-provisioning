@@ -87,9 +87,9 @@ job "mediaserver" {
       }
 
       env {
-        PUID = {{var.PUID}}
-        GUID = {{var.GUID}}
-        TZ = {{var.TZ}}
+        PUID = "{{var.PUID}}"
+        GUID = "{{var.GUID}}"
+        TZ = "{{var.TZ}}"
         JELLYFIN_PublishedServerUrl = ""
       }
 
@@ -145,9 +145,9 @@ job "mediaserver" {
       }
 
       env {
-        PUID = {{var.PUID}}
-        GUID = {{var.GUID}}
-        TZ = {{var.TZ}}
+        PUID = "{{var.PUID}}"
+        GUID = "{{var.GUID}}"
+        TZ = "{{var.TZ}}"
       }
 
       service {
@@ -191,9 +191,9 @@ job "mediaserver" {
       }
 
       env {
-        PUID = {{var.PUID}}
-        GUID = {{var.GUID}}
-        TZ = {{var.TZ}}
+        PUID = "{{var.PUID}}"
+        GUID = "{{var.GUID}}"
+        TZ = "{{var.TZ}}"
         DOCKER_MODS = "linuxserver/calibre-web:calibre"
       }
 

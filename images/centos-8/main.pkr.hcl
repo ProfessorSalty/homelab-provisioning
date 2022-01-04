@@ -36,7 +36,6 @@ locals {
       root_password : var.root_password,
       controller_ssh_pub_key_file : file(var.controller_ssh_pub_key_file),
       timezone : var.timezone,
-      hostname : var.hostname
     })
   }
 }
@@ -67,9 +66,10 @@ source "proxmox" "centos8template" {
   iso_file    = local.iso_file_path
 
   # connection settings
-  ssh_timeout  = local.ssh_timeout
-  ssh_password = var.template_user_password
-  ssh_username = var.template_username
+  ssh_timeout          = local.ssh_timeout
+  ssh_username         = var.template_username
+  ssh_certificate_file = var.controller_ssh_pub_key_file
+  ssh_agent_auth       = true
 
   # machine config
   cores           = 1
@@ -94,10 +94,11 @@ build {
   name    = "centos"
   sources = ["source.proxmox.centos8template"]
 
-    provisioner "ansible" {
-      galaxy_file     = local.ansible_requirements_file
-      playbook_file   = local.ansible_playbook_file
-    }
+  provisioner "ansible" {
+    extra_arguments = ["--extra-vars", "ansible_sudo_pass=\"${var.template_user_password}\""]
+    galaxy_file     = local.ansible_requirements_file
+    playbook_file   = local.ansible_playbook_file
+  }
 }
 
 variable "proxmox_server_protocol" {
@@ -139,10 +140,6 @@ variable "controller_ssh_pub_key_file" {
 }
 
 variable "timezone" {
-  type = string
-}
-
-variable "hostname" {
   type = string
 }
 
