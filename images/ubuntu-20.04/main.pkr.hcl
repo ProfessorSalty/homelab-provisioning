@@ -12,31 +12,24 @@ packer {
   }
 }
 
-local "hostname" {
-  type = string
-  default = "ubuntu-20-04-template"
-}
-
-source "proxmox" "ubuntu2004template" {
-  # proxmox auth
-  node        = var.proxmox_node
-  username    = var.proxmox_username
-  token       = var.proxmox_token
-  node        = var.proxmox_node
-  proxmox_url = "${var.proxmox_server_protocol}://${var.proxmox_host}:${var.proxmox_server_port}/api2/json"
-
-  # metadata
-  template_description = var.proxmox_template_description
-  template_name        = var.template_name
-  os                   = var.os
-  vm_id                = var.proxmox_vm_id
-
-  # cloud_init
-  cloud_init              = var.cloud_init
-  cloud_init_storage_pool = var.storage_pool
-  http_content            = {
-    'meta-data' = ''
-    'user-data' = templatefile('user-data.pkrtmpl', {
+locals {
+  ansible_requirements_file = "${path.root}/../../lib/requirements.yml"
+  ansible_playbook_file     = "${path.root}/playbook.yml"
+  proxmox_url               = "${var.proxmox_server_protocol}://${var.proxmox_host}:${var.proxmox_server_port}/api2/json"
+  boot_command              = ["<esc><wait><esc><wait><f6><wait><esc><wait><bs><bs><bs><bs><bs> autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ --- <enter>,"]
+  boot_wait                 = "6s"
+  os                        = "l26"
+  iso_file_path             = "${var.iso_storage}:iso/${var.iso_file}"
+  ssh_timeout               = "90m"
+  scsi_controller           = "virtio-scsi-pci"
+  main_disk_format          = "raw"
+  storage_pool_type         = "lvm-thin"
+  main_disk_type            = "scsi"
+  network_adapter_model     = "virtio"
+  proxmox_username_token    = "${var.proxmox_user}!${var.proxmox_api_token.id}"
+  http_content              = {
+    '/meta-data' = ''
+    '/user-data' = templatefile('user-data.pkrtmpl', {
       template_user : {
         name : local.template_username,
         password : var.user_password,
@@ -48,40 +41,61 @@ source "proxmox" "ubuntu2004template" {
       timezone : var.timezone
     })
   }
-  boot_command            = "<esc><wait><esc><wait><f6><wait><esc><wait><bs><bs><bs><bs><bs> autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ --- <enter>,"
-  boot_wait               = "6s"
+}
+
+
+source "proxmox" "ubuntu2004template" {
+  # proxmox auth
+  node        = var.proxmox_node
+  username    = local.proxmox_username_token
+  token       = var.proxmox_api_token.secret
+  proxmox_url = local.proxmox_url
+
+  # metadata
+  template_description = var.template_description
+  template_name        = var.template_name
+  vm_id                = var.proxmox_vm_id
+  os                   = local.os
+
+  # cloud_init
+  cloud_init              = var.cloud_init
+  cloud_init_storage_pool = var.storage_pool
+  boot_command            = local.boot_command
+  boot_wait               = local.boot_wait
+  http_content            = local.http_content
 
   # build settings
   qemu_agent  = true
   unmount_iso = true
-  iso_file    = "${var.iso_storage}:iso/${var.iso_file}"
+  iso_file    = local.iso_file_path
 
   # connection settings
-  ssh_password = var.user_password
-  ssh_username = local.template_username
-  ssh_timeout  = "90m"
+  ssh_timeout          = local.ssh_timeout
+  ssh_username         = var.template_username
+  ssh_certificate_file = var.controller_ssh_pub_key_file
+  ssh_agent_auth       = true
 
   # machine config
   cores           = 1
   memory          = 2048
-  scsi_controller = "virtio-scsi"
+  scsi_controller = local.scsi_controller
 
   disks {
     disk_size         = var.main_drive_size
-    format            = "raw"
+    format            = local.main_disk_format
+    storage_pool_type = local.storage_pool_type
+    type              = local.main_disk_type
     storage_pool      = var.storage_pool
-    storage_pool_type = "lvm-thin"
-    type              = "scsi"
   }
 
   network_adapters {
     bridge = var.network_bridge
-    model  = "virtio"
+    model  = local.network_adapter_model
   }
 }
 
 build {
-  sources = ["source.proxmox.vm"]
+  sources = ["source.proxmox.ubuntu2004template"]
   name    = "ubuntu"
 
   provisioner "shell" {
@@ -92,15 +106,105 @@ build {
   }
 
   provisioner "ansible" {
-    extra_arguments = [
-      "--extra-vars", "ansible_become_pass=\"${var.user_password}\"",
-      "--extra-vars", "ansible_ssh_pass=\"${var.user_password}\"",
-      "--extra-vars", "public_key_file=${var.public_key_file}",
-      "--extra-vars", "syslog_server_address=${var.syslog_server_address}",
-      "--extra-vars", "template_username=${var.template_username}",
-    ]
-    galaxy_file     = "ansible/requirements/${var.template_name}-requirements.yml"
-    playbook_file   = "ansible/playbooks/${var.template_name}.yml"
+    extra_arguments = ["--extra-vars", "ansible_sudo_pass=\"${var.template_user_password}\""]
+    galaxy_file     = local.ansible_requirements_file
+    playbook_file   = local.ansible_playbook_file
   }
 }
 
+variable "proxmox_server_protocol" {
+  type    = string
+  default = "https"
+}
+
+variable "proxmox_host" {
+  type = string
+}
+
+variable "proxmox_server_port" {
+  type    = number
+  default = 8006
+}
+
+variable "iso_storage" {
+  type    = string
+  default = "local-lvm"
+}
+
+variable "template_username" {
+  type = string
+}
+
+variable "template_user_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "root_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "controller_ssh_pub_key_file" {
+  type    = string
+  default = "~/.ssh/id_rsa.pub"
+}
+
+variable "timezone" {
+  type = string
+}
+
+variable "proxmox_node" {
+  type = string
+}
+
+variable "proxmox_user" {
+  type = string
+}
+
+variable "proxmox_api_token" {
+  type = object({
+    id     = string
+    secret = string
+  })
+}
+
+variable "template_description" {
+  type = string
+}
+
+variable "template_name" {
+  type = string
+}
+
+variable "proxmox_vm_id" {
+  type = number
+}
+
+variable "cloud_init" {
+  type    = bool
+  default = true
+}
+
+variable "iso_file" {
+  type = string
+}
+
+variable "storage_pool" {
+  type    = string
+  default = "local-lvm"
+}
+
+variable "network_bridge" {
+  type    = string
+  default = "vmbr0"
+}
+
+variable "template-name" {
+  type = string
+}
+
+variable "main_drive_size" {
+  type    = string
+  default = "32G"
+}

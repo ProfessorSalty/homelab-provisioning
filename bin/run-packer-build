@@ -30,7 +30,7 @@ function main() {
   CONTROLLER_TIMEZONE=$(cat /etc/timezone)
   SECRETS_FILE=$(mktemp --suffix ".json" -p .)
 
-  "$BIN_FOLDER/process-json-secrets" "$HOMELAB_SECRETS" "$1" >> "$SECRETS_FILE"
+  "$BIN_FOLDER/process-json-secrets" --secret-type proxmox-templates --target "$1" "$HOMELAB_SECRETS" >> "$SECRETS_FILE"
   
   packer build -var="timezone=$CONTROLLER_TIMEZONE" \
     -var="template-name=$TARGET" \
