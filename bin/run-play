@@ -5,20 +5,38 @@ if [ -z "$(which ansible-playbook)" ]; then
     exit 1
 fi
 
-source "$(dirname $0)/set-environment"
-
 if [ ! "$1" ]; then
     echo "Please specify a play to run"
     exit 1
 fi
+  
+source "$(dirname "$0")/set-environment"
 
-TARGET_PATH="$(realpath $(find $ROOT_FOLDER -type d -name $1))"
+function main() {
+  local TARGET_PATH SECRETS_FILE
+  SECRETS_FILE=$(mktemp --suffix ".json" -p .)
+  
+  trap 'rm -f $SECRETS_FILE' EXIT
+  
+  TARGET_PATH="$(realpath $(find "$ROOT_FOLDER" -type d -name "$1"))"
 
-if [ -z "$TARGET_PATH" ]; then
-    echo "Target directory $TARGET_SETUP does not exist"
+  if [ -z "$TARGET_PATH" ]; then
+      echo "Target directory $TARGET_PATH does not exist"
+      exit 1
+  fi
+
+  HOMELAB_SECRETS=$(realpath ~/.homelab-secrets.json)
+
+  if [ -z "$HOMELAB_SECRETS" ]; then
+    echo "No secrets file found. Please create $HOMELAB_SECRETS"
     exit 1
-fi
+  fi
 
-echo "Running the playbook for $1"
-export ROLES_PATH
-ansible-playbook -i $ANSIBLE_INVENTORY_DIR $TARGET_PATH/playbook.yml
+  "$BIN_FOLDER/process-json-secrets" --secret-type vms --target "$1" "$HOMELAB_SECRETS" >> "$SECRETS_FILE"
+  
+  echo "Running the playbook for $1"
+  export ROLES_PATH
+  ansible-playbook -i "$ANSIBLE_INVENTORY_DIR" -e "@$SECRETS_FILE" "$TARGET_PATH/playbook.yml"
+}
+
+main "@"

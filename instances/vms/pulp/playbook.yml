@@ -2,8 +2,6 @@
   collections:
     - pulp.pulp_installer
     - professorsalty.homelab
-  vars:
-    ca_email: ''
   environment:
     DJANGO_SETTINGS_MODULE: pulpcore.app.settings
       
@@ -13,8 +11,6 @@
         name: pulp_all_services
       
     - set_fact:
-        ca_url: "{{ lookup('env', CA_URL) }}"
-        ca_fingerprint: "{{ lookup('env', CA_FINGERPRINT) }}"
         hostname: "{{ ansible_fqdn }}"
         target_port: "{{ pulp_ui_port | default('8080') {{"
 
@@ -36,13 +32,5 @@
       include_role:
         name: professorsalty.homelab.install_caddy
         
-    - name: Write Caddyfile
-      template:
-        src: Caddyfile.j2
-        dest: "{{ caddyfile_path }}"
-
-    - name: Reload Caddy config
-      command: "caddy run --config {{ caddyfile_path }}"
-    
     - include_role: 
         name: ../roles/setup_auto_updates

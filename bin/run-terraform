@@ -1,5 +1,52 @@
 #!/usr/bin/env bash
 
+set -e
+
 source "$(dirname $0)/set-environment"
+
+function main() {
+  local TARGET TARGET_PATH SECRETS_FILE TMP_PLAN_FILE
+  SECRETS_FILE=$(mktemp --suffix ".json" -p .)
+  TMP_PLAN_FILE=$(mktemp --suffix ".tfstate" -p .)
+  
+  trap 'rm -f {$SECRETS_FILE,$TMP_PLAN_FILE}' EXIT
+  
+  TARGET="$(find "$INSTANCES_DIR" -type d -name "$1")"
+  
+  if [ -z "$TARGET" ]; then
+    echo "There is no build configuration for $1"
+    exit 1
+  fi
+
+  TARGET_PATH="$(realpath "$TARGET")"
+
+  printf 'Running build at %s\n\n' "$TARGET_PATH"
+
+  HOMELAB_SECRETS=$(realpath ~/.homelab-secrets.json)
+
+  if [ -z "$HOMELAB_SECRETS" ]; then
+    echo "No secrets file found. Please create $HOMELAB_SECRETS"
+    exit 1
+  fi
+  
+  "$BIN_FOLDER/process-json-secrets" --secret-type vms --target "$1" "$HOMELAB_SECRETS" >> "$SECRETS_FILE"
+  
+  if [ ! -d "$TARGET_PATH/.terraform" ]; then
+    terraform -chdir="$TARGET_PATH" init 
+  fi
+  
+  terraform -chdir="$TARGET_PATH" -out="$TMP_PLAN_FILE" plan
+  
+  read -p "Proceed with this plan?" -n 1 -r
+  echo    
+  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  then
+      exit 1
+  fi
+  
+  terraform -chdir="$TARGET_PATH" apply "$TMP_PLAN_FILE"
+}
+
+main "$@"
 
 

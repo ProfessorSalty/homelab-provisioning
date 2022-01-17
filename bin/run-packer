@@ -6,6 +6,7 @@ source "$(dirname "$0")/set-environment"
 
 function main() {
   local TARGET TARGET_PATH CONTROLLER_TIMEZONE SECRETS_FILE
+  SECRETS_FILE=$(mktemp --suffix ".json" -p .)
   
   trap 'rm -f $SECRETS_FILE' EXIT
 
@@ -28,7 +29,6 @@ function main() {
   fi
 
   CONTROLLER_TIMEZONE=$(cat /etc/timezone)
-  SECRETS_FILE=$(mktemp --suffix ".json" -p .)
 
   "$BIN_FOLDER/process-json-secrets" --secret-type proxmox-templates --target "$1" "$HOMELAB_SECRETS" >> "$SECRETS_FILE"
   

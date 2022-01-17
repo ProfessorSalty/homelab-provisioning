@@ -31,7 +31,7 @@
         project_name: "{{ job_name }}"
         smb_credentials:
           - username: mediauser
-            password:
+            password: "{{ smb_mediauser_password }}"
             sharepath: media
 
     - name: Install infrastructure

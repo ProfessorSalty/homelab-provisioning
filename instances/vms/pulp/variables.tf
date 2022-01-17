@@ -34,3 +34,8 @@ variable "ssh_public_key" {
   type = string
 }
 
+variable "network_bridge" {
+  type = string
+  default = "vmbr1"
+}
+
