@@ -6,10 +6,6 @@ source "$(dirname $0)/set-environment"
 
 function main() {
   local TARGET TARGET_PATH SECRETS_FILE TMP_PLAN_FILE
-  SECRETS_FILE=$(mktemp --suffix ".json" -p .)
-  TMP_PLAN_FILE=$(mktemp --suffix ".tfstate" -p .)
-  
-  trap 'rm -f {$SECRETS_FILE,$TMP_PLAN_FILE}' EXIT
   
   TARGET="$(find "$INSTANCES_DIR" -type d -name "$1")"
   
@@ -19,6 +15,12 @@ function main() {
   fi
 
   TARGET_PATH="$(realpath "$TARGET")"
+  
+  SECRETS_FILE=$(mktemp --suffix ".json" -p "$TARGET_PATH")
+  TMP_PLAN_FILE=$(mktemp --suffix ".tfstate" -p .)
+  
+  trap 'rm -f {$SECRETS_FILE,$TMP_PLAN_FILE}' EXIT
+  
 
   printf 'Running build at %s\n\n' "$TARGET_PATH"
 
@@ -35,7 +37,7 @@ function main() {
     terraform -chdir="$TARGET_PATH" init 
   fi
   
-  terraform -chdir="$TARGET_PATH" -out="$TMP_PLAN_FILE" plan
+  terraform -chdir="$TARGET_PATH" plan -compact-warnings -out="$TMP_PLAN_FILE" -var-file="$SECRETS_FILE" 
   
   read -p "Proceed with this plan?" -n 1 -r
   echo    
@@ -44,7 +46,7 @@ function main() {
       exit 1
   fi
   
-  terraform -chdir="$TARGET_PATH" apply "$TMP_PLAN_FILE"
+  terraform -chdir="$TARGET_PATH" apply -compact-warnings "$TMP_PLAN_FILE"
 }
 
 main "$@"

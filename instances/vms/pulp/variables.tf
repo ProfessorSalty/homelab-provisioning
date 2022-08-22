@@ -1,41 +1,41 @@
-variable "pm_api_url" {
-  type = string
-  default = ""
-}
-
-variable "pm_user_pass" {
-  type = string
+variable "proxmox_token" {
   sensitive = true
-  default = ""
+  type      = object({
+    id = string
+    secret = string
+  })
 }
 
-variable "pm_user" {
+variable "proxmox_host" {
   type = string
+}
+
+variable "proxmox_user" {
+  type = string
+  validation {
+    condition = can(regex("@(pam|pve)$", var.proxmox_user))
+    error_message = "Please enter the full username with the authentication domain (@pve, @pam, etc.)."
+  }
 }
 
 variable "data_storage_path" {
   type = string
+  description = "The name of the storage pool on the Proxmox node that will host the disk"
 }
 
 variable "target_node" {
   type = string
+  description = "The Proxmox node that will host the VM"
 }
 
 variable "clone_source" {
   type = string
-}
-
-variable "template_password" {
-  type = string
-  sensitive = true
-}
-
-variable "ssh_public_key" {
-  type = string
+  description = "Which template to use when building the VM"
 }
 
 variable "network_bridge" {
   type = string
   default = "vmbr1"
+  description = "Which network bridge will the VM use"
 }
 
