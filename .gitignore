@@ -46,3 +46,12 @@ terraform.rc
 
 **/configuration.yml
 .vscode
+
+# intellij project files
+.idea
+*.iml
+out
+gen
+
+### ansible template
+*.retry
