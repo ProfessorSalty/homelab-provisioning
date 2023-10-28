@@ -1,4 +1,4 @@
-#version=RHEL8
+#version=Rocky9
 
 # Use text install
 text --non-interactive
@@ -66,8 +66,6 @@ autopart --nohome --nolvm
 # Use CDROM installation media
 cdrom
 reboot --eject
-
-selinux --disabled
 
 # Root password
 rootpw ${root_password}

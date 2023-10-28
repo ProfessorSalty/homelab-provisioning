@@ -40,7 +40,7 @@ locals {
   }
 }
 
-source "proxmox" "centos8template" {
+source "proxmox" "rocky9template" {
   # proxmox auth
   node        = var.proxmox_node
   username    = local.proxmox_username_token
@@ -91,8 +91,8 @@ source "proxmox" "centos8template" {
 }
 
 build {
-  name    = "centos"
-  sources = ["source.proxmox.centos8template"]
+  name    = "rocky"
+  sources = ["source.proxmox.rocky9template"]
 
   provisioner "ansible" {
     extra_arguments = ["--extra-vars", "ansible_sudo_pass=\"${var.template_user_password}\""]
@@ -136,7 +136,7 @@ variable "root_password" {
 
 variable "controller_ssh_pub_key_file" {
   type    = string
-  default = "~/.ssh/id_rsa.pub"
+  required = true
 }
 
 variable "timezone" {
@@ -187,10 +187,6 @@ variable "storage_pool" {
 variable "network_bridge" {
   type    = string
   default = "vmbr0"
-}
-
-variable "template-name" {
-  type = string
 }
 
 variable "main_drive_size" {

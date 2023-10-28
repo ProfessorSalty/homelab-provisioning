@@ -44,7 +44,7 @@ locals {
 }
 
 
-source "proxmox" "ubuntu2004template" {
+source "proxmox" "ubuntu2204template" {
   # proxmox auth
   node        = var.proxmox_node
   username    = local.proxmox_username_token
@@ -95,14 +95,14 @@ source "proxmox" "ubuntu2004template" {
 }
 
 build {
-  sources = ["source.proxmox.ubuntu2004template"]
+  sources = ["source.proxmox.ubuntu2204template"]
   name    = "ubuntu"
 
   provisioner "shell" {
     # kind of a hack to force the provisioner to wait for cloud-init to finish
-    inline = [
-      "while [ ${var.cloud_init == true} && ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
-    ]
+    inline = var.cloud_init ? [
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+    ] : []
   }
 
   provisioner "ansible" {
